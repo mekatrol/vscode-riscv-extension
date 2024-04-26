@@ -1,0 +1,83 @@
+{
+  "name": "mekatrol-risc-v-language-tools",
+  "displayName": "Mekatrol RISC-V Language Tools and Formatter",
+  "description": "Code helper and formatter for RISC-V assembly language files.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.88.0"
+  },
+  "keywords": [
+    "riscv",
+    "risc-v",
+    "ch32",
+    "formatter",
+    "asm",
+    "s",
+    "S"
+  ],
+  "categories": [
+    "Formatters"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "RISC-V language tools [Mekatrol]",
+      "properties": {
+        "indent.instructions": {
+          "type": "number",
+          "default": 2,
+          "description": "The column to offset instructions. Set to -1 to disable instruction indentation formatting."
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "assembly",
+        "aliases": [
+          "assembly",
+          "asm",
+          "riscv",
+          "risc-v"
+        ],
+        "extensions": [
+          ".S",
+          ".s",
+          ".asm"
+        ],
+        "configuration": "./configs/riscv-language-configuration.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext .ts,.js --ignore-path .gitignore",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.4",
+    "@babel/preset-env": "^7.24.4",
+    "@babel/preset-typescript": "^7.24.1",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/vscode": "^1.88.0",
+    "@typescript-eslint/eslint-plugin": "^7.4.0",
+    "@typescript-eslint/parser": "^7.4.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
