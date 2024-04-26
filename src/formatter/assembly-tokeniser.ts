@@ -1,7 +1,7 @@
 export enum AssemblyTokenType {
   Comment = 'Comment',
   Label = 'Label',
-  NewLine = 'NewLine',
+  Newline = 'Newline',
   Space = 'Space',
   Unknown = 'Unknown',
   Value = 'Value'
@@ -13,6 +13,12 @@ export interface AssemblyToken {
   token: string;
   type: AssemblyTokenType;
 }
+
+// Token matching expressions
+// NOTES:
+//    1. the group names must match the values in the enum AssemblyTokenType
+//    2. the order of precedence is left to right (earlier groups will match before later groups in regex)
+const reToken = /(?<Space>^[ \t]+)|(?<Comment>^#.*$)|(?<Newline>\r\n|\n|\r)|(?<Label>[A-Za-z_][A-Za-z0-9_]*:)|(?<Value>[^# \t\r\n:]+)|(?<Unknown>(^.+$))/;
 
 export class AssemblyTokeniser {
   private content: string;
@@ -37,40 +43,30 @@ export class AssemblyTokeniser {
     const remainingContent = this.content.substring(this.contentOffset);
 
     // Regex next token
-    const groups = /(?<space>^[ \t]+)|(?<comment>^#.*$)|(?<newline>\r\n|\n|\r)|(?<value>[^# \t]+)|(?<unknown>(^.+$))/.exec(remainingContent)?.groups;
+    const groups = reToken.exec(remainingContent)?.groups;
 
     // If there are no groups then return the rest of the content
     // as an unknown token
     if (!groups) {
       // Remainder is unknown token
-      return this.advanceToken(remainingContent, AssemblyTokenType.Unknown);
+      return this.createTokenAndAdvance(remainingContent, AssemblyTokenType.Unknown);
     }
 
-    if (groups['space'] != undefined) {
-      return this.advanceToken(groups['space'], AssemblyTokenType.Space);
+    // Look for the first matching group that is not undefined
+    for (let key in groups) {
+      let value = groups[key];
+
+      if (value != undefined) {
+        // It is assumed that only one group in regex will match, therefore first found group is correct one to return
+        return this.createTokenAndAdvance(value, AssemblyTokenType[key as keyof typeof AssemblyTokenType]);
+      }
     }
 
-    if (groups['newline'] != undefined) {
-      return this.advanceToken(groups['newline'], AssemblyTokenType.NewLine);
-    }
-
-    if (groups['value'] != undefined) {
-      return this.advanceToken(groups['value'], AssemblyTokenType.Value);
-    }
-
-    if (groups['comment'] != undefined) {
-      return this.advanceToken(groups['comment'], AssemblyTokenType.Comment);
-    }
-
-    if (groups['unknown'] != undefined) {
-      return this.advanceToken(groups['unknown'], AssemblyTokenType.Unknown);
-    }
-
-    // Remainder is unknown token
-    return this.advanceToken(remainingContent, AssemblyTokenType.Unknown);
+    // Remainder of line is unknown token
+    return this.createTokenAndAdvance(remainingContent, AssemblyTokenType.Unknown);
   };
 
-  private advanceToken = (tokenValue: string, type: AssemblyTokenType): AssemblyToken => {
+  private createTokenAndAdvance = (tokenValue: string, type: AssemblyTokenType): AssemblyToken => {
     const token = {
       lineNumber: this.lineNumber,
       columnNumber: this.columnNumber,
@@ -81,8 +77,14 @@ export class AssemblyTokeniser {
     // Get length of token
     const tokenLength = tokenValue.length;
 
-    // Advance column
-    this.columnNumber += tokenLength;
+    if (token.type === AssemblyTokenType.Newline) {
+      // Advance line
+      this.lineNumber++;
+      this.columnNumber = 1;
+    } else {
+      // Advance column
+      this.columnNumber += tokenLength;
+    }
 
     // Advance content offset
     this.contentOffset += tokenLength;
