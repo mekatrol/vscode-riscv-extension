@@ -1,13 +1,6 @@
 import * as vscode from 'vscode';
 import { posix } from 'path';
-import { configurationFileName, defaultTabWidth } from './constants';
-
-const defaultConfiguration: AssemblyFormatterConfiguration = {
-  instructionIndentation: 2,
-  labelsHaveOwnLine: true,
-  replaceTabsWithSpaces: undefined,
-  tabWidth: 2
-};
+import { configurationFileName, defaultConfiguration, defaultTabWidth } from './constants';
 
 export interface AssemblyFormatterConfiguration {
   // The column that instructions will be indented to, -1 for disable indenting instructions
@@ -22,6 +15,12 @@ export interface AssemblyFormatterConfiguration {
   // The number of spaced that a tab consumes. Used to determine column numbering.
   // ie a tabWidth of 1 will add 1 to the column number when a tab is found, whereas a tabWidth of 4 will add 4 to the column number when a tab is found.
   tabWidth: number;
+
+  // The column number to place directives, undefined to leave as is
+  directiveColumn: number | undefined;
+
+  // The column number to place directive data, undefined to leave as is
+  directiveDataColumn: number | undefined;
 }
 
 export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguration> => {

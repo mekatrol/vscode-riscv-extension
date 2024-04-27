@@ -46,7 +46,7 @@ const reToken = new RegExp(reTokenSource, reTokenFlags);
 export interface AssemblyToken {
   lineNumber: number;
   columnNumber: number;
-  token: string;
+  value: string;
   type: AssemblyTokenType;
 }
 
@@ -131,7 +131,7 @@ export class AssemblyTokeniser {
     const token = {
       lineNumber: this.lineNumber,
       columnNumber: this.columnNumber,
-      token: tokenValue,
+      value: tokenValue,
       type: type
     } as AssemblyToken;
 

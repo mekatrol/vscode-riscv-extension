@@ -1,121 +1,164 @@
-import * as vscode from 'vscode';
-import { AssemblyTokeniser } from './assembly-tokeniser';
+import { AssemblyToken, AssemblyTokenType, AssemblyTokeniser } from './assembly-tokeniser';
 import { AssemblyFormatterConfiguration } from './assembly-formatter-configuration';
 
-interface BlockLines {
-  text: string;
-  original: vscode.TextLine;
-}
-
 export class AssemblyFormatter {
-  private blockLines: BlockLines[] = [];
   private configuration?: AssemblyFormatterConfiguration;
   private tokeniser?: AssemblyTokeniser;
+  private document: string = '';
+  private eol: string = '\r\n';
 
-  formatDocument = (document: vscode.TextDocument, configuration: AssemblyFormatterConfiguration): vscode.TextEdit[] => {
+  public formatDocument = (document: string, configuration: AssemblyFormatterConfiguration, eol: string): string => {
     this.configuration = configuration;
-    this.tokeniser = new AssemblyTokeniser(document.getText(), this.configuration.tabWidth);
+    this.tokeniser = new AssemblyTokeniser(document, this.configuration.tabWidth);
+    this.document = '';
+    this.eol = eol;
 
-    // Clear line block
-    this.blockLines = [];
+    while (this.tokeniser.hasMore()) {
+      const tokens = this.tokeniser.nextLine();
+      const primaryType = this.getPrimaryToken(tokens);
 
-    //Set of changes made to the document
-    const changes: vscode.TextEdit[] = [];
+      do {
+        switch (primaryType) {
+          case AssemblyTokenType.Newline:
+            // Add a new line
+            this.document += this.eol;
+            break;
 
-    // while (this.tokeniser.hasMore()) {
-    //   const token = this.tokeniser.nextToken();
-    // }
+          case AssemblyTokenType.Space:
+            // Do nothing for empty whitespace
+            break;
 
-    // Enumerate lines
-    for (let lineNo = 0; lineNo < document.lineCount; lineNo++) {
-      const line = document.lineAt(lineNo);
-      const change = this.formatLine(line);
+          case AssemblyTokenType.Directive:
+            this.document += this.processDirective(tokens);
+            break;
 
-      // Was there a change?
-      if (change !== undefined) {
-        // Push the change to the set of changes
-        changes.push(change);
-
-        // Push this line to block
-        this.blockLines.push({ text: change.newText, original: line });
-      } else {
-        // Push this line to block
-        this.blockLines.push({ text: line.text, original: line });
-      }
-
-      // Process current block lines to determine if multiple line formatting needed
-      this.processBlockLines(changes);
-    }
-
-    return changes;
-  };
-
-  formatLine = (line: vscode.TextLine): vscode.TextEdit | undefined => {
-    // Get text from line
-    let text = line.text;
-
-    // Trim any lines that are only white space
-    text = line.text.replace(/^[\s\t]+$/, '');
-
-    // Trim any trailing spaces and tabs at line end
-    text = line.text.replace(/[\s\t]+$/, '');
-
-    // Replace line if modified
-    return text != line.text ? vscode.TextEdit.replace(line.range, text) : undefined;
-  };
-
-  processBlockLines = (changes: vscode.TextEdit[]): void => {
-    // True if the previous line was a comment
-    let prevNonBlankLineIsComment = false;
-
-    // Remove all lines up to and including this index
-    let removeToIndex = -1;
-
-    for (let i = 0; i < this.blockLines.length; i++) {
-      const text = this.blockLines[i].text;
-
-      // Previous steps have already trimmed empty lines, so can just check length === 0
-      if (text.length === 0) {
-        // Blank lines reset previous flags
-        prevNonBlankLineIsComment = false;
-        removeToIndex = i;
-        continue;
-      }
-
-      // Check if is a comment only line
-      if (this.isCommentLine(text)) {
-        prevNonBlankLineIsComment = true;
-        continue;
-      }
-
-      // If not previous comments then can remove lines up til this one from block
-      if (!prevNonBlankLineIsComment) {
-        removeToIndex = i;
-        continue;
-      }
-
-      // There was a previous comment before this line so indent all previous lines to match this line
-      const match = text.match(/^[\s\t]+/);
-
-      if (match && match.length > 0) {
-        const whitespace = match[0];
-
-        for (let j = removeToIndex >= 0 ? removeToIndex : 0; j < i; j++) {
-          changes.push(vscode.TextEdit.replace(this.blockLines[j].original.range, whitespace + this.blockLines[j].text));
+          default:
+            while (tokens.length) {
+              tokens.shift();
+            }
+            break;
         }
-      }
-
-      removeToIndex = i;
-      prevNonBlankLineIsComment = false;
+      } while (tokens.length);
     }
 
-    // Remove any lined that do not need to be processed any further
-    if (removeToIndex >= 0) {
-      this.blockLines = this.blockLines.splice(removeToIndex + 1);
-    }
+    return document;
   };
 
-  isCommentLine = (text: string): boolean => {
-    return /^[\s\t]*#/.test(text);
+  private getPrimaryToken = (tokens: AssemblyToken[]): AssemblyTokenType => {
+    if (tokens.length === 0) {
+      // If there are no tokens then this is an empty line
+      return AssemblyTokenType.Newline;
+    }
+
+    // Get all tokens that are not space
+    let nonSpace = tokens.filter((t) => t.type !== AssemblyTokenType.Space);
+
+    // Nothing but spaces?
+    if (nonSpace.length === 0) {
+      // Line is all spaces
+      return AssemblyTokenType.Space;
+    }
+
+    return nonSpace[0].type;
+  };
+
+  private processSpace = (spaces: string): string => {
+    const tabWidth = this.configuration!.tabWidth;
+    const replaceTabs = this.configuration!.replaceTabsWithSpaces;
+
+    let line = '';
+
+    // Enumerate characters in spaces
+    spaces.split('').forEach((c) => {
+      // If is white space or if not replacing tabs then just append as is
+      if (c === ' ' || !replaceTabs) {
+        this.document += c;
+      } else {
+        // Replace tab character with spaces to specified tab width
+        line += ''.padEnd(tabWidth, ' ');
+      }
+    });
+
+    return line;
+  };
+
+  private processDirective = (tokens: AssemblyToken[]): string => {
+    const directiveColumn = this.configuration!.directiveColumn;
+    const directiveDataColumn = this.configuration!.directiveDataColumn;
+
+    let line = '';
+
+    let token = tokens.shift();
+
+    if (!token) {
+      throw Error('At least one token must be provided to processDirective');
+    }
+
+    if (token.type === AssemblyTokenType.Space) {
+      // Add spaces
+      line += this.getSpacesToColumn(directiveColumn, line.length, token.value);
+
+      // Remove token from set
+      token = tokens.shift();
+    }
+
+    if (!token) {
+      throw Error('Directive token missing');
+    }
+
+    if (token.type !== AssemblyTokenType.Directive) {
+      throw Error(`Unexpected token type '${token.type}' when processing directive`);
+    }
+
+    // Add value
+    line += token.value;
+
+    token = tokens.shift();
+
+    // No more tokens so return line so far
+    if (!token) {
+      return line;
+    }
+
+    // There must be a space after the directive
+    if (token.type === AssemblyTokenType.Space) {
+      // Add spaces
+      line += this.getSpacesToColumn(directiveDataColumn, line.length, token.value);
+
+      // Remove token from set
+      token = tokens.shift();
+    }
+
+    // No more tokens so return line so far
+    if (!token) {
+      return line;
+    }
+
+    do {
+      // Just append token value
+      line += token.value;
+
+      token = tokens.shift();
+    } while (token);
+
+    return line;
+  };
+
+  private getSpacesToColumn = (desiredColumn: number | undefined, currentColumn: number, spaces: string): string => {
+    if (!desiredColumn) {
+      // If no desired column specified then we just return processed spaces
+      return this.processSpace(spaces);
+    }
+
+    // Add spaces up to desiredColumn
+    let length = desiredColumn - currentColumn;
+
+    if (length <= 0) {
+      // We need a minimum of 1 space. This happens if currentColumn >= desiredColumn
+      length = 1;
+    }
+
+    // Return length number of spaces
+    return ''.padEnd(length, ' ');
   };
 }

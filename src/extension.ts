@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { EOL } from 'node:os';
 import { AssemblyFormatter } from './formatter/assembly-formatter';
 import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration } from './formatter/assembly-formatter-configuration';
 
@@ -7,7 +8,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Register the formatter
   vscode.languages.registerDocumentFormattingEditProvider('assembly', {
     async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
-      return new AssemblyFormatter().formatDocument(document, await loadConfiguration());
+      new AssemblyFormatter().formatDocument(document.getText(), await loadConfiguration(), getEol());
+
+      return [];
     }
   });
 
@@ -36,3 +39,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push(command);
 }
+
+const getEol = (): string => {
+  // Get root configuration
+  const rootConfig = vscode.workspace.getConfiguration('');
+
+  // Get end of line configuration setting
+  const eol = rootConfig.get<string>('files.eol');
+
+  // If not defined or set to auto then just return the OS EOL, else return the configured EOL
+  return !eol || eol === 'auto' ? EOL : eol;
+};
