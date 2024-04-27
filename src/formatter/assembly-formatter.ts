@@ -83,8 +83,8 @@ export class AssemblyFormatter {
   };
 
   private processDirective = (tokens: AssemblyToken[]): string => {
-    const directiveColumn = this.configuration!.directiveColumn;
-    const directiveDataColumn = this.configuration!.directiveDataColumn;
+    const directiveColumn = this.configuration?.directiveColumn ?? 0;
+    const directiveDataColumn = this.configuration?.directiveDataColumn ?? 0;
 
     let line = '';
 
@@ -101,6 +101,9 @@ export class AssemblyFormatter {
 
       // Pop next token
       token = tokens.shift();
+    } else if (directiveColumn > 0) {
+      // There was no whitespace at beginning of line so insert 'directiveColumn' spaces
+      line += this.getSpacesToColumn(directiveColumn, line.length, '');
     }
 
     if (!token) {
