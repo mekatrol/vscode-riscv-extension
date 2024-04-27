@@ -41,7 +41,7 @@ export class AssemblyFormatter {
       } while (tokens.length);
     }
 
-    return document;
+    return this.document;
   };
 
   private getPrimaryToken = (tokens: AssemblyToken[]): AssemblyTokenType => {
@@ -72,7 +72,7 @@ export class AssemblyFormatter {
     spaces.split('').forEach((c) => {
       // If is white space or if not replacing tabs then just append as is
       if (c === ' ' || !replaceTabs) {
-        this.document += c;
+        line += c;
       } else {
         // Replace tab character with spaces to specified tab width
         line += ''.padEnd(tabWidth, ' ');
@@ -88,6 +88,7 @@ export class AssemblyFormatter {
 
     let line = '';
 
+    // Pop next token
     let token = tokens.shift();
 
     if (!token) {
@@ -98,7 +99,7 @@ export class AssemblyFormatter {
       // Add spaces
       line += this.getSpacesToColumn(directiveColumn, line.length, token.value);
 
-      // Remove token from set
+      // Pop next token
       token = tokens.shift();
     }
 
@@ -110,9 +111,10 @@ export class AssemblyFormatter {
       throw Error(`Unexpected token type '${token.type}' when processing directive`);
     }
 
-    // Add value
+    // Add section directive value (eg .section, .bss, .data)
     line += token.value;
 
+    // Pop next token
     token = tokens.shift();
 
     // No more tokens so return line so far
@@ -125,7 +127,7 @@ export class AssemblyFormatter {
       // Add spaces
       line += this.getSpacesToColumn(directiveDataColumn, line.length, token.value);
 
-      // Remove token from set
+      // Pop next token
       token = tokens.shift();
     }
 
@@ -134,31 +136,47 @@ export class AssemblyFormatter {
       return line;
     }
 
+    // Just append all remaining tokens
     do {
-      // Just append token value
-      line += token.value;
+      if (token.type === AssemblyTokenType.Space) {
+        line += this.processSpace(token.value);
+      } else if (token.type === AssemblyTokenType.Comment) {
+        // TODO: maybe space comment at certain column?
+        // Just append comment
+        line += token.value;
+      } else {
+        // Just append token value
+        line += token.value;
+      }
 
+      // Pop next token
       token = tokens.shift();
     } while (token);
 
     return line;
   };
 
-  private getSpacesToColumn = (desiredColumn: number | undefined, currentColumn: number, spaces: string): string => {
+  private getSpacesToColumn = (desiredColumn: number | undefined, currentLineLength: number, spaces: string): string => {
     if (!desiredColumn) {
       // If no desired column specified then we just return processed spaces
       return this.processSpace(spaces);
     }
 
     // Add spaces up to desiredColumn
-    let length = desiredColumn - currentColumn;
+    // Note: lengths start at index 0 whereas columns start at column 1
+    //       so we need to adjust the column by - 1 to shift it to zero based indexes
+    //       when calculating padding length
+    // For example:
+    //   If currentLength === 0 && desiredColumn ===  5 then we insert 4 spaces ( 5 - 1 -  0)
+    //   If currentLength === 1 && desiredColumn === 20 then we insert 9 spaces (20 - 1 - 10)
+    let paddingLength = desiredColumn - 1 - currentLineLength;
 
-    if (length <= 0) {
+    if (paddingLength <= 0) {
       // We need a minimum of 1 space. This happens if currentColumn >= desiredColumn
-      length = 1;
+      paddingLength = 1;
     }
 
     // Return length number of spaces
-    return ''.padEnd(length, ' ');
+    return ''.padEnd(paddingLength, ' ');
   };
 }

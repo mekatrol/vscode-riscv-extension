@@ -8,6 +8,6 @@ export const defaultConfiguration: AssemblyFormatterConfiguration = {
   labelsHaveOwnLine: true,
   replaceTabsWithSpaces: undefined,
   tabWidth: 2,
-  directiveColumn: 4,
+  directiveColumn: 5,
   directiveDataColumn: 20
 };
