@@ -1,3 +1,5 @@
+import { defaultTabWidth } from './assembly-formatter-configuration';
+
 export enum AssemblyTokenType {
   Comment = 'Comment',
   Directive = 'Directive',
@@ -60,7 +62,7 @@ export class AssemblyTokeniser {
     this.lineNumber = 1;
     this.columnNumber = 1;
     this.contentOffset = 0;
-    this.tabWidth = tabWidth;
+    this.tabWidth = isNaN(tabWidth) || tabWidth < 1 ? defaultTabWidth : tabWidth; // Make sure a valid value
   }
 
   public hasMore = (): boolean => {

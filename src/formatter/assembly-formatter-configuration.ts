@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { posix } from 'path';
 
-const configurationFileName = '.fasm';
+export const configurationFileName = '.fasm';
+export const defaultTabWidth = 2;
 
 const defaultConfiguration: AssemblyFormatterConfiguration = {
   instructionIndentation: 2,
@@ -80,7 +81,7 @@ export const createDefaultConfiguration = async (): Promise<[CreateAssemblyForma
 
     // Create the file
     // eslint-disable-next-line no-undef
-    const writeData = Buffer.from(JSON.stringify(configuration), 'utf8');
+    const writeData = Buffer.from(JSON.stringify(configuration, null, defaultTabWidth), 'utf8');
     await vscode.workspace.fs.writeFile(fileUri, writeData);
 
     return [CreateAssemblyFormatterConfigurationResult.Created, fileUri.path];
