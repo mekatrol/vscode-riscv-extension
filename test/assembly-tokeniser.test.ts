@@ -1,15 +1,15 @@
 import { expect, test, describe } from '@jest/globals';
-import { AssemblyTokenType, AssemblyTokeniser } from '../src/formatter/assembly-tokeniser';
+import { AssemblyToken, AssemblyTokenType, AssemblyTokeniser } from '../src/formatter/assembly-tokeniser';
 
 test('Empty content returns undefined token', () => {
-  const tokeniser = new AssemblyTokeniser('');
+  const tokeniser = new AssemblyTokeniser('', 2);
   const token = tokeniser.nextToken();
 
   expect(token).toBe(undefined);
 });
 
 test('Whitespace content returns whitespace token followed by undefined token', () => {
-  const tokeniser = new AssemblyTokeniser('    ');
+  const tokeniser = new AssemblyTokeniser('    ', 2);
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Space);
@@ -22,7 +22,7 @@ test('Whitespace content returns whitespace token followed by undefined token', 
 });
 
 test('Whitespace content returns whitespace token followed by new line', () => {
-  const tokeniser = new AssemblyTokeniser('    \n');
+  const tokeniser = new AssemblyTokeniser('    \n', 2);
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Space);
@@ -43,7 +43,7 @@ test('Whitespace content returns whitespace token followed by new line', () => {
 
 describe('newline', () => {
   test('\n', () => {
-    const tokeniser = new AssemblyTokeniser('\n');
+    const tokeniser = new AssemblyTokeniser('\n', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Newline);
@@ -56,7 +56,7 @@ describe('newline', () => {
   });
 
   test('\r', () => {
-    const tokeniser = new AssemblyTokeniser('\r');
+    const tokeniser = new AssemblyTokeniser('\r', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Newline);
@@ -69,7 +69,7 @@ describe('newline', () => {
   });
 
   test('\r\n', () => {
-    const tokeniser = new AssemblyTokeniser('\r\n');
+    const tokeniser = new AssemblyTokeniser('\r\n', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Newline);
@@ -83,7 +83,7 @@ describe('newline', () => {
 });
 
 test('li', () => {
-  const tokeniser = new AssemblyTokeniser('li');
+  const tokeniser = new AssemblyTokeniser('li', 2);
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Value);
@@ -96,7 +96,7 @@ test('li', () => {
 });
 
 test('li\ta0,R32_GPIOD_CFGLR # This is the comment', () => {
-  const tokeniser = new AssemblyTokeniser('li\ta0,R32_GPIOD_CFGLR # This is the comment');
+  const tokeniser = new AssemblyTokeniser('li\ta0,R32_GPIOD_CFGLR # This is the comment', 1);
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Value);
@@ -138,7 +138,7 @@ test('li\ta0,R32_GPIOD_CFGLR # This is the comment', () => {
 
 describe('labels', () => {
   test('li:', () => {
-    const tokeniser = new AssemblyTokeniser('li:');
+    const tokeniser = new AssemblyTokeniser('li:', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -151,7 +151,7 @@ describe('labels', () => {
   });
 
   test('li_:', () => {
-    const tokeniser = new AssemblyTokeniser('li_:');
+    const tokeniser = new AssemblyTokeniser('li_:', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -164,7 +164,7 @@ describe('labels', () => {
   });
 
   test('li3:', () => {
-    const tokeniser = new AssemblyTokeniser('li3:');
+    const tokeniser = new AssemblyTokeniser('li3:', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -177,7 +177,7 @@ describe('labels', () => {
   });
 
   test('li_2:', () => {
-    const tokeniser = new AssemblyTokeniser('li_2:');
+    const tokeniser = new AssemblyTokeniser('li_2:', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -190,7 +190,7 @@ describe('labels', () => {
   });
 
   test('_li:', () => {
-    const tokeniser = new AssemblyTokeniser('_li:');
+    const tokeniser = new AssemblyTokeniser('_li:', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -203,7 +203,7 @@ describe('labels', () => {
   });
 
   test('1_li:', () => {
-    const tokeniser = new AssemblyTokeniser('1_li:');
+    const tokeniser = new AssemblyTokeniser('1_li:', 2);
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).not.toBe(AssemblyTokenType.Label);
@@ -211,12 +211,101 @@ describe('labels', () => {
 });
 
 test('fileContent', () => {
-  const tokeniser = new AssemblyTokeniser(fileContent);
+  const tokeniser = new AssemblyTokeniser(fileContent, 2);
+
+  const expectedLineTokens: AssemblyToken[][] = [
+    [],
+    [
+      {
+        lineNumber: 2,
+        columnNumber: 1,
+        type: AssemblyTokenType.Comment,
+        token: '# The "ax",@progbits tells the assembler that the section is allocatable ("a"), executable ("x") and contains data ("@progbits").'
+      }
+    ],
+    [
+      {
+        lineNumber: 3,
+        columnNumber: 1,
+        type: AssemblyTokenType.Space,
+        token: '	'
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 3,
+        type: AssemblyTokenType.Directive,
+        token: '.section'
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 11,
+        type: AssemblyTokenType.Space,
+        token: '             '
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 24,
+        type: AssemblyTokenType.Directive,
+        token: '.init'
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 29,
+        type: AssemblyTokenType.Value,
+        token: ','
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 30,
+        type: AssemblyTokenType.Space,
+        token: ' '
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 31,
+        type: AssemblyTokenType.String,
+        token: '"ax"'
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 35,
+        type: AssemblyTokenType.Value,
+        token: ','
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 36,
+        type: AssemblyTokenType.Space,
+        token: ' '
+      },
+      {
+        lineNumber: 3,
+        columnNumber: 37,
+        type: AssemblyTokenType.Value,
+        token: '@progbits'
+      }
+    ]
+  ];
+
+  let expectedLineNumber = 1;
 
   while (tokeniser.hasMore()) {
-    let token = tokeniser.nextToken();
-    expect(token).not.toEqual(undefined);
-    expect(token?.type).not.toEqual(AssemblyTokenType.Unknown);
+    if (expectedLineNumber > expectedLineTokens.length) {
+      // Only process as many lines as there are expected lines
+      break;
+    }
+
+    const expectedTokens = expectedLineTokens[expectedLineNumber - 1];
+
+    const lineTokens = tokeniser.nextLine();
+    expect(lineTokens).not.toEqual(undefined);
+    expect(lineTokens.length).toEqual(expectedTokens.length);
+
+    for (let i = 0; i < lineTokens.length; i++) {
+      expect(lineTokens[i]).toEqual(expectedTokens[i]);
+    }
+
+    expectedLineNumber++;
   }
 });
 

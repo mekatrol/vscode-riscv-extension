@@ -3,6 +3,13 @@ import { posix } from 'path';
 
 const configurationFileName = '.fasm';
 
+const defaultConfiguration: AssemblyFormatterConfiguration = {
+  instructionIndentation: 2,
+  labelsHaveOwnLine: true,
+  replaceTabsWithSpaces: undefined,
+  tabWidth: 2
+};
+
 export interface AssemblyFormatterConfiguration {
   // The column that instructions will be indented to, -1 for disable indenting instructions
   instructionIndentation: number;
@@ -12,14 +19,14 @@ export interface AssemblyFormatterConfiguration {
 
   // If replaceTabsWithSpaces is not undefined then replace any tabs with the specified number of spaces
   replaceTabsWithSpaces: number | undefined;
+
+  // The number of spaced that a tab consumes. Used to determine column numbering.
+  // ie a tabWidth of 1 will add 1 to the column number when a tab is found, whereas a tabWidth of 4 will add 4 to the column number when a tab is found.
+  tabWidth: number;
 }
 
 export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguration> => {
-  let configuration: AssemblyFormatterConfiguration = {
-    instructionIndentation: 2,
-    labelsHaveOwnLine: true,
-    replaceTabsWithSpaces: undefined
-  };
+  let configuration: AssemblyFormatterConfiguration = Object.assign({}, defaultConfiguration);
 
   if (!vscode.workspace.workspaceFolders) {
     // Return default if there is no workspace configuration file
@@ -51,11 +58,7 @@ export enum CreateAssemblyFormatterConfigurationResult {
 }
 
 export const createDefaultConfiguration = async (): Promise<[CreateAssemblyFormatterConfigurationResult, string?]> => {
-  let configuration: AssemblyFormatterConfiguration = {
-    instructionIndentation: 2,
-    labelsHaveOwnLine: true,
-    replaceTabsWithSpaces: undefined
-  };
+  let configuration: AssemblyFormatterConfiguration = Object.assign({}, defaultConfiguration);
 
   if (!vscode.workspace.workspaceFolders) {
     // Return default if there is no workspace configuration file

@@ -53,12 +53,14 @@ export class AssemblyTokeniser {
   private lineNumber: number;
   private columnNumber: number;
   private contentOffset: number;
+  private tabWidth: number;
 
-  constructor(content: string) {
+  constructor(content: string, tabWidth: number) {
     this.content = content;
     this.lineNumber = 1;
     this.columnNumber = 1;
     this.contentOffset = 0;
+    this.tabWidth = tabWidth;
   }
 
   public hasMore = (): boolean => {
@@ -71,6 +73,23 @@ export class AssemblyTokeniser {
 
   public getColumnNumber = (): number => {
     return this.columnNumber;
+  };
+
+  public nextLine = (): AssemblyToken[] => {
+    const lineTokens: AssemblyToken[] = [];
+
+    // Enumerate tokens and add to token line until no more tokens or new line found
+    while (this.hasMore()) {
+      const token = this.nextToken();
+
+      if (!token || token.type === AssemblyTokenType.Newline) {
+        break;
+      }
+
+      lineTokens.push(token);
+    }
+
+    return lineTokens;
   };
 
   public nextToken = (): AssemblyToken | undefined => {
@@ -114,21 +133,28 @@ export class AssemblyTokeniser {
       type: type
     } as AssemblyToken;
 
-    // Get length of token
-    const tokenLength = tokenValue.length;
-
     if (token.type === AssemblyTokenType.Newline) {
       // Advance line
       this.lineNumber++;
       this.columnNumber = 1;
     } else {
       // Advance column
-      this.columnNumber += tokenLength;
+      this.columnNumber += type === AssemblyTokenType.Space ? this.calculateSpaceLength(tokenValue) : tokenValue.length;
     }
 
     // Advance content offset
-    this.contentOffset += tokenLength;
+    this.contentOffset += tokenValue.length;
 
     return token;
+  };
+
+  private calculateSpaceLength = (tokenValue: string): number => {
+    const chars = tokenValue.split('');
+
+    let length = 0;
+
+    chars.forEach((c) => (length += c == ' ' ? 1 : this.tabWidth));
+
+    return length;
   };
 }

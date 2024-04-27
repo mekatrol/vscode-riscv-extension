@@ -14,13 +14,17 @@ export class AssemblyFormatter {
 
   formatDocument = (document: vscode.TextDocument, configuration: AssemblyFormatterConfiguration): vscode.TextEdit[] => {
     this.configuration = configuration;
-    this.tokeniser = new AssemblyTokeniser(document.getText());
+    this.tokeniser = new AssemblyTokeniser(document.getText(), this.configuration.tabWidth);
 
     // Clear line block
     this.blockLines = [];
 
     //Set of changes made to the document
     const changes: vscode.TextEdit[] = [];
+
+    // while (this.tokeniser.hasMore()) {
+    //   const token = this.tokeniser.nextToken();
+    // }
 
     // Enumerate lines
     for (let lineNo = 0; lineNo < document.lineCount; lineNo++) {
