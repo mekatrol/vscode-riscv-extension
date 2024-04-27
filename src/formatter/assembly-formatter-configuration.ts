@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { posix } from 'path';
-
-export const configurationFileName = '.fasm';
-export const defaultTabWidth = 2;
+import { configurationFileName, defaultTabWidth } from './constants';
 
 const defaultConfiguration: AssemblyFormatterConfiguration = {
   instructionIndentation: 2,

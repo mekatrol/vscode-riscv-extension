@@ -1,4 +1,4 @@
-import { defaultTabWidth } from './assembly-formatter-configuration';
+import { defaultTabWidth } from './constants';
 
 export enum AssemblyTokenType {
   Comment = 'Comment',
