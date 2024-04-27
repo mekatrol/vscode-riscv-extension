@@ -11,9 +11,9 @@ describe('directive', () => {
     config.directiveColumn = 5;
     config.directiveDataColumn = 20;
 
-    const document = formatter.formatDocument('       .section               .init, "ax", @progbits', config, EOL);
+    const document = formatter.formatDocument('       .section               .init, "ax", @progbits\t\t', config, EOL);
 
-    expect(document).toBe('    .section       .init, "ax", @progbits');
+    expect(document).toBe('    .section       .init, "ax", @progbits'); // Note: whitespace at end also trimmed
 
     // at col 5
     const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.section'.length);
@@ -71,9 +71,9 @@ describe('directive', () => {
     config.directiveColumn = 2;
     config.directiveDataColumn = 3; // Note this would place directive value within directive itself
 
-    const document = formatter.formatDocument('.include             "./src/registers.S"', config, EOL);
+    const document = formatter.formatDocument('.include             "./src/registers.S"  ', config, EOL);
 
-    expect(document).toBe(' .include "./src/registers.S"');
+    expect(document).toBe(' .include "./src/registers.S"'); // Note: whitespace at end also trimmed
 
     // at col 1
     const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.include'.length);

@@ -21,6 +21,12 @@ export interface AssemblyFormatterConfiguration {
 
   // The column number to place directive data, undefined to leave as is
   directiveDataColumn: number | undefined;
+
+  // The column number to place labels, undefined to leave as is
+  labelColumn: number | undefined;
+
+  // The column number to place label data, undefined to leave as is
+  labelDataColumn: number | undefined;
 }
 
 export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguration> => {
