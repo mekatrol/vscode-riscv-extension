@@ -79,7 +79,7 @@ describe('directive', () => {
     const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.include'.length);
     expect(directive).toBe('.include');
 
-    // at column 11 (even though 3 specified that would place inside directive so it is automatically padded by 1 space to end of directive)
+    // at column 11 (even though 3 specified that would place inside directive so it is automatically padded by 1 space after end of directive)
     const directiveValue = document.substring(11 - 1, 11 - 1 + '"./src/registers.S"'.length);
     expect(directiveValue).toBe('"./src/registers.S"');
   });
