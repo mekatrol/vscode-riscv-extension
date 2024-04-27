@@ -1,11 +1,12 @@
 {
   "name": "mekatrol-risc-v-language-tools",
-  "displayName": "Mekatrol RISC-V Language Tools and Formatter",
+  "displayName": "Mekatrol RISC-V Language Tools",
   "description": "Code helper and formatter for RISC-V assembly language files.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.88.0"
   },
+  "main": "./dist/extension.js",
   "keywords": [
     "riscv",
     "risc-v",
@@ -21,24 +22,20 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./dist/extension.js",
   "contributes": {
-    "configuration": {
-      "title": "RISC-V language tools [Mekatrol]",
-      "properties": {
-        "indent.instructions": {
-          "type": "number",
-          "default": 2,
-          "description": "The column to offset instructions. Set to -1 to disable instruction indentation formatting."
-        }
+    "commands": [
+      {
+        "command": "mekatrol.riscv-language-tools.addConfigurationFile",
+        "title": "RISC-V language tools: Add configuration file to workspace"
       }
-    },
+    ],
     "languages": [
       {
         "id": "assembly",
         "aliases": [
           "assembly",
           "asm",
+          "ch32",
           "riscv",
           "risc-v"
         ],

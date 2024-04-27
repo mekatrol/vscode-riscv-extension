@@ -1,41 +1,38 @@
 import * as vscode from 'vscode';
-import { AssemblyFormatter, FormatConfiguration } from './formatter/assembly-formatter';
-import { posix } from 'path';
-
-const loadConfiguration = async (): Promise<FormatConfiguration> => {
-  let configuration: FormatConfiguration = {
-    instructionIndentation: 2,
-    labelsHaveOwnLine: true
-  };
-
-  if (!vscode.workspace.workspaceFolders) {
-    // Return default if there is no workspace configuration file
-    return configuration;
-  }
-
-  try {
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
-    const fileUri = folderUri.with({ path: posix.join(folderUri.path, '.fasm') });
-
-    const fileContent = await vscode.workspace.fs.readFile(fileUri);
-    // eslint-disable-next-line no-undef
-    const json = Buffer.from(fileContent).toString('utf8');
-    const newConfiguration = JSON.parse(json);
-
-    configuration = Object.assign(configuration, newConfiguration);
-  } catch {
-    /* ignore errors if config file does not exist */
-  }
-
-  return configuration;
-};
+import { AssemblyFormatter } from './formatter/assembly-formatter';
+import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration } from './formatter/assembly-formatter-configuration';
 
 // Called when extension is activated
-export async function activate(_: /*context*/ vscode.ExtensionContext): Promise<void> {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // Register the formatter
   vscode.languages.registerDocumentFormattingEditProvider('assembly', {
     async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
       return new AssemblyFormatter().formatDocument(document, await loadConfiguration());
     }
   });
+
+  // Register command handler
+  const command = vscode.commands.registerCommand('mekatrol.riscv-language-tools.addConfigurationFile', async () => {
+    const [result, fileNameOrError] = await createDefaultConfiguration();
+
+    switch (result) {
+      case CreateAssemblyFormatterConfigurationResult.AlreadyExists:
+        vscode.window.showWarningMessage(`RISC-V assembly formatter configuration file '${fileNameOrError}' already exists!`);
+        break;
+
+      case CreateAssemblyFormatterConfigurationResult.Created:
+        vscode.window.showInformationMessage(`RISC-V assembly formatter configuration file '${fileNameOrError}' created.`);
+        break;
+
+      case CreateAssemblyFormatterConfigurationResult.NoWorkspace:
+        vscode.window.showInformationMessage('Open a workspace to add a configuration file.');
+        break;
+
+      case CreateAssemblyFormatterConfigurationResult.Error:
+        vscode.window.showErrorMessage(`Error creating configuration file: ${fileNameOrError}.`);
+        break;
+    }
+  });
+
+  context.subscriptions.push(command);
 }

@@ -1,25 +1,18 @@
 import * as vscode from 'vscode';
 import { AssemblyTokeniser } from './assembly-tokeniser';
+import { AssemblyFormatterConfiguration } from './assembly-formatter-configuration';
 
 interface BlockLines {
   text: string;
   original: vscode.TextLine;
 }
 
-export interface FormatConfiguration {
-  // The column that instructions will be indented to, -1 for disable indenting instructions
-  instructionIndentation: number;
-
-  // True if labels have their own line, else false if they can share line, undefined to disable label processing
-  labelsHaveOwnLine: boolean;
-}
-
 export class AssemblyFormatter {
   private blockLines: BlockLines[] = [];
-  private configuration?: FormatConfiguration;
+  private configuration?: AssemblyFormatterConfiguration;
   private tokeniser?: AssemblyTokeniser;
 
-  formatDocument = (document: vscode.TextDocument, configuration: FormatConfiguration): vscode.TextEdit[] => {
+  formatDocument = (document: vscode.TextDocument, configuration: AssemblyFormatterConfiguration): vscode.TextEdit[] => {
     this.configuration = configuration;
     this.tokeniser = new AssemblyTokeniser(document.getText());
 
