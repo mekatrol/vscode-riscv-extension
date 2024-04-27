@@ -21,7 +21,16 @@ module.exports = {
   rules: {
     'prefer-promise-reject-errors': 'error',
 
-    'max-len': ['error', 200],
+    'max-len': [
+      'error',
+      200,
+      {
+        // Ignore path of SVG
+        // Ignore content string (eg embedded image or SVG) in CSS
+        // Ignore RegExp strings
+        ignorePattern: '^\\s*\\/'
+      }
+    ],
 
     // An error not to use single quotes
     quotes: [
@@ -51,7 +60,7 @@ module.exports = {
     // does not work with type definitions
     'no-unused-vars': 'off',
 
-    // Should use 'const' and 'let', but not 'var' for declarian variables
+    // Should use 'const' and 'let', but not 'var' for declaration variables
     // 'var' has global scope!
     'no-var': 'error',
 

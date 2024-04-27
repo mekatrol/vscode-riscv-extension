@@ -1,11 +1,45 @@
 export enum AssemblyTokenType {
   Comment = 'Comment',
+  Directive = 'Directive',
   Label = 'Label',
   Newline = 'Newline',
   Space = 'Space',
+  String = 'String',
   Unknown = 'Unknown',
   Value = 'Value'
 }
+
+// Token matching expressions for each AssemblyTokenType
+// NOTES:
+//    1. the group names must match the values in the enum AssemblyTokenType
+//    2. the groups names are processed in order of definition (top to bottom)
+const reTokens = [
+  /(?<Comment>^#.*)/,
+  /(?<Directive>^\.[A-Za-z_][A-Za-z0-9_]*)/,
+  /(?<Label>^[A-Za-z_][A-Za-z0-9_]*:)/,
+  /(?<Newline>^\r\n|^\n|^\r)/,
+  /(?<Space>^[ \t]+)/,
+  /(?<String>".*?")/,
+  /(?<Value>^[^# \t\r\n:]+)/,
+
+  // This must be last match as it matches anything
+  /(?<Unknown>(^.+)($|\n|\r))/
+];
+
+// Create distinct set of flags
+const reTokenFlags = reTokens
+  .map((t) => t.flags)
+  .join('') // Join all as single string
+  .split('') // Split into individual characters
+  .sort() // Sort alphabetically
+  .join('') // Rejoin characters
+  .replace(/(.)(?=.*\1)/g, ''); // Make letters distinct (remove repeated characters)
+
+// Join all source values with or '|' operator
+const reTokenSource = reTokens.map((t) => t.source).join('|');
+
+// Construct the joined expression
+const reToken = new RegExp(reTokenSource, reTokenFlags);
 
 export interface AssemblyToken {
   lineNumber: number;
@@ -13,12 +47,6 @@ export interface AssemblyToken {
   token: string;
   type: AssemblyTokenType;
 }
-
-// Token matching expressions
-// NOTES:
-//    1. the group names must match the values in the enum AssemblyTokenType
-//    2. the order of precedence is left to right (earlier groups will match before later groups in regex)
-const reToken = /(?<Space>^[ \t]+)|(?<Comment>^#.*$)|(?<Newline>\r\n|\n|\r)|(?<Label>[A-Za-z_][A-Za-z0-9_]*:)|(?<Value>[^# \t\r\n:]+)|(?<Unknown>(^.+$))/;
 
 export class AssemblyTokeniser {
   private content: string;
@@ -33,9 +61,21 @@ export class AssemblyTokeniser {
     this.contentOffset = 0;
   }
 
+  public hasMore = (): boolean => {
+    return this.contentOffset < this.content.length;
+  };
+
+  public getLineNumber = (): number => {
+    return this.lineNumber;
+  };
+
+  public getColumnNumber = (): number => {
+    return this.columnNumber;
+  };
+
   public nextToken = (): AssemblyToken | undefined => {
     // If all content tokenised then return undefined
-    if (this.contentOffset >= this.content.length) {
+    if (!this.hasMore()) {
       return undefined;
     }
 
