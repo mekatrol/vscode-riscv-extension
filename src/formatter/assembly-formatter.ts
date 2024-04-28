@@ -66,6 +66,13 @@ export class AssemblyFormatter {
             line += this.processInstruction(tokens);
             break;
 
+          case AssemblyTokenType.Comment:
+            while (tokens.length) {
+              const token = tokens.shift()!;
+              line += token.value;
+            }
+            break;
+
           default:
             while (tokens.length) {
               tokens.shift();
@@ -77,11 +84,14 @@ export class AssemblyFormatter {
         primaryType = this.getPrimaryToken(tokens);
       } while (tokens.length);
 
+      // Trim whitespace from end and add EOL
+      line = line.trimEnd() + eol;
+
       // Add line and trim any whitespace at end of line
-      this.document += line.trimEnd();
+      this.document += line;
     }
 
-    return this.document;
+    return this.configuration.endOfFileHasBlankLine ? this.document : this.document.trimEnd();
   };
 
   private getPrimaryToken = (tokens: AssemblyToken[]): AssemblyTokenType => {

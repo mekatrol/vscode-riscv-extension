@@ -8,9 +8,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Register the formatter
   vscode.languages.registerDocumentFormattingEditProvider('assembly', {
     async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
-      new AssemblyFormatter().formatDocument(document.getText(), await loadConfiguration(), getEol());
+      const content = new AssemblyFormatter().formatDocument(document.getText(), await loadConfiguration(), getEol());
 
-      return [];
+      // Get range of entire document
+      const firstLine = document.lineAt(0);
+      const lastLine = document.lineAt(document.lineCount - 1);
+      const textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+
+      // Replace entire document
+      return [vscode.TextEdit.replace(textRange, content)];
     }
   });
 

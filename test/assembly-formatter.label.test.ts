@@ -8,6 +8,7 @@ describe('label', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.label.column = 5;
     config.label.dataColumn = 20;
 
@@ -24,6 +25,7 @@ describe('label', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.label.column = 5;
     config.label.dataColumn = 20;
 
@@ -44,6 +46,7 @@ describe('label', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.label.column = undefined;
     config.label.dataColumn = undefined;
     config.label.hasOwnLine = true;

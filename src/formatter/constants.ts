@@ -4,6 +4,8 @@ export const configurationFileName = '.fasm';
 export const defaultTabWidth = 2;
 
 export const defaultConfiguration: AssemblyFormatterConfiguration = {
+  endOfFileHasBlankLine: true,
+
   tabs: {
     replaceTabsWithSpaces: undefined,
     tabWidth: 2

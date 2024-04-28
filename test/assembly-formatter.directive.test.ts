@@ -8,6 +8,7 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.directive.column = 5;
     config.directive.dataColumn = 20;
 
@@ -28,6 +29,7 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.directive.column = 3;
     config.directive.dataColumn = 12;
 
@@ -48,6 +50,7 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.directive.column = 3;
     config.directive.dataColumn = 12;
 
@@ -68,6 +71,7 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
+    config.endOfFileHasBlankLine = false;
     config.directive.column = 2;
     config.directive.dataColumn = 3; // Note this would place directive value within directive itself
 

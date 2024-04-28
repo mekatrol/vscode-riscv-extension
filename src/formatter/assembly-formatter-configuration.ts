@@ -35,6 +35,8 @@ export interface TabConfiguration {
 }
 
 export interface AssemblyFormatterConfiguration {
+  endOfFileHasBlankLine: boolean;
+
   tabs: TabConfiguration;
 
   directive: DirectiveConfiguration;
