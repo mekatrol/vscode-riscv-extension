@@ -1,28 +1,25 @@
-import * as vscode from 'vscode';
-import { posix } from 'path';
-import { configurationFileName, defaultConfiguration, defaultTabWidth } from './constants';
+import { InstructionSet } from '../riscv/instructions';
 
 export interface IndentableConfiguration {
-  // The column number to place primary token, undefined to leave as is
-  column: number | undefined;
+  // The column number to place primary token, undefined to leave as is in file
+  primaryColumn: number | undefined;
 
-  // The column number to place primary data, undefined to leave as is
+  // The column number to place primary data (eg op code data), undefined to leave as is in file
   dataColumn: number | undefined;
 
-  // The column number to place comments
+  // The column number to place comments, undefined to leave as is in file
   commentColumn: number | undefined;
 }
 
 export interface DirectiveConfiguration extends IndentableConfiguration {}
 
 export interface LabelConfiguration extends IndentableConfiguration {
-  // True if a label has its own line, false if they can share line, undefined leave as is
+  // True if a label has its own line, false if they can share line, undefined leave as is in file
   hasOwnLine: boolean;
 }
 
 export interface InstructionConfiguration extends IndentableConfiguration {
-  bits: number;
-  supportsMultiplication: boolean;
+  supportedInstructionSets: InstructionSet[];
 }
 
 export interface TabConfiguration {
@@ -54,78 +51,3 @@ export interface MetaAssemblyFormatterConfiguration {
 export interface AssemblyFormatterConfigurationWithMeta extends AssemblyFormatterConfiguration {
   meta: MetaAssemblyFormatterConfiguration;
 }
-
-export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguration> => {
-  let configuration: AssemblyFormatterConfiguration = Object.assign({}, defaultConfiguration);
-
-  if (!vscode.workspace.workspaceFolders) {
-    // Return default if there is no workspace configuration file
-    return configuration;
-  }
-
-  try {
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
-    const fileUri = folderUri.with({ path: posix.join(folderUri.path, configurationFileName) });
-
-    const fileContent = await vscode.workspace.fs.readFile(fileUri);
-    // eslint-disable-next-line no-undef
-    const json = Buffer.from(fileContent).toString('utf8');
-    const newConfiguration = JSON.parse(json);
-
-    configuration = Object.assign(configuration, newConfiguration);
-  } catch {
-    /* ignore errors if config file does not exist */
-  }
-
-  return configuration;
-};
-
-export enum CreateAssemblyFormatterConfigurationResult {
-  AlreadyExists = 'AlreadyExists',
-  Created = 'Created',
-  Error = 'Error',
-  NoWorkspace = 'NoWorkspace'
-}
-
-export const createDefaultConfiguration = async (): Promise<[CreateAssemblyFormatterConfigurationResult, string?]> => {
-  let configuration: AssemblyFormatterConfigurationWithMeta = Object.assign(
-    {
-      meta: {
-        version: 1,
-        description: 'See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values.'
-      }
-    },
-    defaultConfiguration
-  );
-
-  if (!vscode.workspace.workspaceFolders) {
-    // Return default if there is no workspace configuration file
-    return [CreateAssemblyFormatterConfigurationResult.NoWorkspace, undefined];
-  }
-
-  try {
-    const folderUri = vscode.workspace.workspaceFolders[0].uri;
-    const fileUri = folderUri.with({ path: posix.join(folderUri.path, configurationFileName) });
-
-    // Does the file already exist?
-    try {
-      if ((await vscode.workspace.fs.stat(fileUri)) != undefined) {
-        return [CreateAssemblyFormatterConfigurationResult.AlreadyExists, fileUri.path];
-      }
-    } catch {
-      /* ignore */
-    }
-
-    const content = JSON.stringify(configuration, null, defaultTabWidth);
-
-    // Create the file
-    // eslint-disable-next-line no-undef
-    const writeData = Buffer.from(content, 'utf8');
-    await vscode.workspace.fs.writeFile(fileUri, writeData);
-
-    return [CreateAssemblyFormatterConfigurationResult.Created, fileUri.path];
-  } catch (e) {
-    /* ignore errors if config file does not exist */
-    return [CreateAssemblyFormatterConfigurationResult.Error, e?.toString()];
-  }
-};

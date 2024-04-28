@@ -9,7 +9,7 @@ describe('label', () => {
 
     const config = Object.assign({}, defaultConfiguration);
     config.endOfFileHasBlankLine = false;
-    config.label.column = 5;
+    config.label.primaryColumn = 5;
     config.label.dataColumn = 20;
 
     const document = formatter.formatDocument('       LABEL_1:\t\t', config, EOL);
@@ -17,7 +17,7 @@ describe('label', () => {
     expect(document).toBe('    LABEL_1:'); // Note: whitespace at end also trimmed
 
     // at col 5
-    const directive = document.substring(config.label.column - 1, config.label.column - 1 + 'LABEL_1:'.length);
+    const directive = document.substring(config.label.primaryColumn - 1, config.label.primaryColumn - 1 + 'LABEL_1:'.length);
     expect(directive).toBe('LABEL_1:');
   });
 
@@ -26,7 +26,7 @@ describe('label', () => {
 
     const config = Object.assign({}, defaultConfiguration);
     config.endOfFileHasBlankLine = false;
-    config.label.column = 5;
+    config.label.primaryColumn = 5;
     config.label.dataColumn = 20;
 
     const document = formatter.formatDocument('       LABEL_1: # do stuff    ', config, EOL);
@@ -34,7 +34,7 @@ describe('label', () => {
     expect(document).toBe('    LABEL_1:       # do stuff'); // Note: whitespace at end also trimmed
 
     // at col 5
-    const directive = document.substring(config.label.column - 1, config.label.column - 1 + 'LABEL_1:'.length);
+    const directive = document.substring(config.label.primaryColumn - 1, config.label.primaryColumn - 1 + 'LABEL_1:'.length);
     expect(directive).toBe('LABEL_1:');
 
     // at column 20
@@ -47,12 +47,12 @@ describe('label', () => {
 
     const config = Object.assign({}, defaultConfiguration);
     config.endOfFileHasBlankLine = false;
-    config.label.column = undefined;
+    config.label.primaryColumn = undefined;
     config.label.dataColumn = undefined;
     config.label.hasOwnLine = true;
 
     // Because we check the remainder make sure it is formatted as expected
-    config.instruction.column = 5;
+    config.instruction.primaryColumn = 5;
     config.instruction.dataColumn = 20;
     config.instruction.commentColumn = 40;
 

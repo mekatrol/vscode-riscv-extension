@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { EOL } from 'node:os';
 import { AssemblyFormatter } from './formatter/assembly-formatter';
-import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration } from './formatter/assembly-formatter-configuration';
+import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration } from './utils/configuration';
 
 // Called when extension is activated
 export async function activate(context: vscode.ExtensionContext): Promise<void> {

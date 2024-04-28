@@ -1,4 +1,3 @@
-import { rv32InstructionNames } from '../riscv/instructions';
 import { defaultTabWidth } from './constants';
 
 export enum AssemblyTokenType {
@@ -58,13 +57,15 @@ export class AssemblyTokeniser {
   private columnNumber: number;
   private contentOffset: number;
   private tabWidth: number;
+  private instructions: string[];
 
-  constructor(content: string, tabWidth: number) {
+  constructor(content: string, tabWidth: number, instructions: string[]) {
     this.content = content;
     this.lineNumber = 1;
     this.columnNumber = 1;
     this.contentOffset = 0;
     this.tabWidth = isNaN(tabWidth) || tabWidth < 1 ? defaultTabWidth : tabWidth; // Make sure a valid value
+    this.instructions = instructions;
   }
 
   public hasMore = (): boolean => {
@@ -137,7 +138,7 @@ export class AssemblyTokeniser {
   };
 
   private checkIsInstruction = (value: string, originalTokenType: AssemblyTokenType): AssemblyTokenType => {
-    const matchingInstruction = rv32InstructionNames.filter((i) => i === value.toLowerCase());
+    const matchingInstruction = this.instructions.filter((i) => i === value.toLowerCase());
 
     if (matchingInstruction.length === 0) {
       return originalTokenType;

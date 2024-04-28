@@ -1,5 +1,6 @@
 import { AssemblyToken, AssemblyTokenType, AssemblyTokeniser } from './assembly-tokeniser';
 import { AssemblyFormatterConfiguration, IndentableConfiguration } from './assembly-formatter-configuration';
+import { getCombinedInstructions } from '../riscv/instructions';
 
 export class AssemblyFormatter {
   private configuration?: AssemblyFormatterConfiguration;
@@ -9,7 +10,7 @@ export class AssemblyFormatter {
 
   public formatDocument = (document: string, configuration: AssemblyFormatterConfiguration, eol: string): string => {
     this.configuration = configuration;
-    this.tokeniser = new AssemblyTokeniser(document, this.configuration.tabs.tabWidth);
+    this.tokeniser = new AssemblyTokeniser(document, this.configuration.tabs.tabWidth, getCombinedInstructions(configuration.instruction.supportedInstructionSets));
     this.document = '';
     this.eol = eol;
 
@@ -139,7 +140,7 @@ export class AssemblyFormatter {
   };
 
   private processIndentable = (tokens: AssemblyToken[], primaryTokenType: AssemblyTokenType, indenting: IndentableConfiguration): string => {
-    const startColumn = indenting.column ?? 0;
+    const startColumn = indenting.primaryColumn ?? 0;
     const dataColumn = indenting.dataColumn ?? 0;
     const commentColumn = indenting.commentColumn ?? 0;
 
@@ -247,7 +248,7 @@ export class AssemblyFormatter {
   };
 
   private processLabel = (tokens: AssemblyToken[]): [string, boolean] => {
-    const startColumn = this.configuration?.label.column ?? 0;
+    const startColumn = this.configuration?.label.primaryColumn ?? 0;
     const dataColumn = this.configuration?.label.dataColumn ?? 0;
     const ownLine = this.configuration?.label.hasOwnLine;
 

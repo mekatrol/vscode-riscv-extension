@@ -9,7 +9,7 @@ describe('instruction', () => {
 
     const config = Object.assign({}, defaultConfiguration);
     config.endOfFileHasBlankLine = false;
-    config.instruction.column = 1;
+    config.instruction.primaryColumn = 1;
     config.instruction.dataColumn = 6;
     config.instruction.commentColumn = 20;
 
@@ -18,7 +18,7 @@ describe('instruction', () => {
     expect(document).toBe('call set_register_bits_with_mask'); // Note: whitespace at end also trimmed
 
     // at col 5
-    const instruction = document.substring(config.instruction.column - 1, config.instruction.column - 1 + 'call'.length);
+    const instruction = document.substring(config.instruction.primaryColumn - 1, config.instruction.primaryColumn - 1 + 'call'.length);
     expect(instruction).toBe('call');
 
     // at column 20
