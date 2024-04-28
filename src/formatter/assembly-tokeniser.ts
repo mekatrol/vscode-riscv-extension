@@ -1,8 +1,10 @@
+import { rv32InstructionNames } from '../riscv/instructions';
 import { defaultTabWidth } from './constants';
 
 export enum AssemblyTokenType {
   Comment = 'Comment',
   Directive = 'Directive',
+  Instruction = 'Instruction',
   Label = 'Label',
   Newline = 'Newline',
   Space = 'Space',
@@ -118,13 +120,30 @@ export class AssemblyTokeniser {
       let value = groups[key];
 
       if (value != undefined) {
+        let tokenType = AssemblyTokenType[key as keyof typeof AssemblyTokenType];
+
+        // If is a value then check to see if is an instruction
+        if (tokenType === AssemblyTokenType.Value) {
+          tokenType = this.checkIsInstruction(value, tokenType);
+        }
+
         // It is assumed that only one group in regex will match, therefore first found group is correct one to return
-        return this.createTokenAndAdvance(value, AssemblyTokenType[key as keyof typeof AssemblyTokenType]);
+        return this.createTokenAndAdvance(value, tokenType);
       }
     }
 
     // Remainder of line is unknown token
     return this.createTokenAndAdvance(remainingContent, AssemblyTokenType.Unknown);
+  };
+
+  private checkIsInstruction = (value: string, originalTokenType: AssemblyTokenType): AssemblyTokenType => {
+    const matchingInstruction = rv32InstructionNames.filter((i) => i === value.toLowerCase());
+
+    if (matchingInstruction.length === 0) {
+      return originalTokenType;
+    }
+
+    return AssemblyTokenType.Instruction;
   };
 
   private createTokenAndAdvance = (tokenValue: string, type: AssemblyTokenType): AssemblyToken => {

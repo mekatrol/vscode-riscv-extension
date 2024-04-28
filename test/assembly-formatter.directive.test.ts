@@ -8,19 +8,19 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
-    config.directiveColumn = 5;
-    config.directiveDataColumn = 20;
+    config.directive.column = 5;
+    config.directive.dataColumn = 20;
 
     const document = formatter.formatDocument('       .section               .init, "ax", @progbits\t\t', config, EOL);
 
     expect(document).toBe('    .section       .init, "ax", @progbits'); // Note: whitespace at end also trimmed
 
     // at col 5
-    const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.section'.length);
+    const directive = document.substring(config.directive.column - 1, config.directive.column - 1 + '.section'.length);
     expect(directive).toBe('.section');
 
     // at column 20
-    const directiveValue = document.substring(config.directiveDataColumn - 1, config.directiveDataColumn - 1 + '.init'.length);
+    const directiveValue = document.substring(config.directive.dataColumn - 1, config.directive.dataColumn - 1 + '.init'.length);
     expect(directiveValue).toBe('.init');
   });
 
@@ -28,19 +28,19 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
-    config.directiveColumn = 3;
-    config.directiveDataColumn = 12;
+    config.directive.column = 3;
+    config.directive.dataColumn = 12;
 
     const document = formatter.formatDocument('.globl _start', config, EOL);
 
     expect(document).toBe('  .globl   _start');
 
     // at col 3
-    const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.globl'.length);
+    const directive = document.substring(config.directive.column - 1, config.directive.column - 1 + '.globl'.length);
     expect(directive).toBe('.globl');
 
     // at column 12
-    const directiveValue = document.substring(config.directiveDataColumn - 1, config.directiveDataColumn - 1 + '_start'.length);
+    const directiveValue = document.substring(config.directive.dataColumn - 1, config.directive.dataColumn - 1 + '_start'.length);
     expect(directiveValue).toBe('_start');
   });
 
@@ -48,19 +48,19 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
-    config.directiveColumn = 3;
-    config.directiveDataColumn = 12;
+    config.directive.column = 3;
+    config.directive.dataColumn = 12;
 
     const document = formatter.formatDocument('.align               2', config, EOL);
 
     expect(document).toBe('  .align   2');
 
     // at col 3
-    const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.align'.length);
+    const directive = document.substring(config.directive.column - 1, config.directive.column - 1 + '.align'.length);
     expect(directive).toBe('.align');
 
     // at column 12
-    const directiveValue = document.substring(config.directiveDataColumn - 1, config.directiveDataColumn - 1 + '2'.length);
+    const directiveValue = document.substring(config.directive.dataColumn - 1, config.directive.dataColumn - 1 + '2'.length);
     expect(directiveValue).toBe('2');
   });
 
@@ -68,15 +68,15 @@ describe('directive', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
-    config.directiveColumn = 2;
-    config.directiveDataColumn = 3; // Note this would place directive value within directive itself
+    config.directive.column = 2;
+    config.directive.dataColumn = 3; // Note this would place directive value within directive itself
 
     const document = formatter.formatDocument('.include             "./src/registers.S"  ', config, EOL);
 
     expect(document).toBe(' .include "./src/registers.S"'); // Note: whitespace at end also trimmed
 
     // at col 1
-    const directive = document.substring(config.directiveColumn - 1, config.directiveColumn - 1 + '.include'.length);
+    const directive = document.substring(config.directive.column - 1, config.directive.column - 1 + '.include'.length);
     expect(directive).toBe('.include');
 
     // at column 11 (even though 3 specified that would place inside directive so it is automatically padded by 1 space after end of directive)

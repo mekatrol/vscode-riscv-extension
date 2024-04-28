@@ -87,7 +87,7 @@ test('li', () => {
   const tokeniser = new AssemblyTokeniser('li', 2);
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
-  expect(token?.type).toBe(AssemblyTokenType.Value);
+  expect(token?.type).toBe(AssemblyTokenType.Instruction);
   expect(token!.lineNumber).toBe(1);
   expect(token!.columnNumber).toBe(1);
   expect(token!.value).toBe('li');
@@ -100,7 +100,7 @@ test('li\ta0,R32_GPIOD_CFGLR # This is the comment', () => {
   const tokeniser = new AssemblyTokeniser('li\ta0,R32_GPIOD_CFGLR # This is the comment', 1);
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
-  expect(token?.type).toBe(AssemblyTokenType.Value);
+  expect(token?.type).toBe(AssemblyTokenType.Instruction);
   expect(token!.lineNumber).toBe(1);
   expect(token!.columnNumber).toBe(1);
   expect(token!.value).toBe('li');

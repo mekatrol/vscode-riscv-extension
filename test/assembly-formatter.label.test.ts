@@ -8,35 +8,53 @@ describe('label', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
-    config.labelColumn = 5;
-    config.labelDataColumn = 20;
+    config.label.column = 5;
+    config.label.dataColumn = 20;
 
     const document = formatter.formatDocument('       LABEL_1:\t\t', config, EOL);
 
     expect(document).toBe('    LABEL_1:'); // Note: whitespace at end also trimmed
 
     // at col 5
-    const directive = document.substring(config.labelColumn - 1, config.labelColumn - 1 + 'LABEL_1:'.length);
+    const directive = document.substring(config.label.column - 1, config.label.column - 1 + 'LABEL_1:'.length);
     expect(directive).toBe('LABEL_1:');
   });
 
-  test('label data', () => {
+  test('label with comment', () => {
     const formatter = new AssemblyFormatter();
 
     const config = Object.assign({}, defaultConfiguration);
-    config.labelColumn = 5;
-    config.labelDataColumn = 20;
+    config.label.column = 5;
+    config.label.dataColumn = 20;
 
     const document = formatter.formatDocument('       LABEL_1: # do stuff    ', config, EOL);
 
     expect(document).toBe('    LABEL_1:       # do stuff'); // Note: whitespace at end also trimmed
 
     // at col 5
-    const directive = document.substring(config.labelColumn - 1, config.labelColumn - 1 + '.section'.length);
+    const directive = document.substring(config.label.column - 1, config.label.column - 1 + 'LABEL_1:'.length);
     expect(directive).toBe('LABEL_1:');
 
     // at column 20
-    const directiveValue = document.substring(config.labelDataColumn - 1);
+    const directiveValue = document.substring(config.label.dataColumn - 1);
     expect(directiveValue).toBe('# do stuff');
+  });
+
+  test('label own line', () => {
+    const formatter = new AssemblyFormatter();
+
+    const config = Object.assign({}, defaultConfiguration);
+    config.label.column = undefined;
+    config.label.dataColumn = undefined;
+    config.label.hasOwnLine = true;
+
+    const document = formatter.formatDocument('LABEL_1: li t1,0x34 # do stuff    ', config, EOL);
+
+    const groups = /(?<firstLine>[^\n\r]+)($|\n|\r\n)+(?<remainder>.*)/.exec(document)?.groups;
+    const firstLine = groups ? groups['firstLine'] : '';
+    const remainder = groups ? groups['remainder'] : '';
+
+    expect(firstLine).toBe('LABEL_1:'); // Note: whitespace at end also trimmed
+    expect(remainder).toBe('    li             t1,0x34 # do stuff'); // Note: whitespace at end also trimmed
   });
 });

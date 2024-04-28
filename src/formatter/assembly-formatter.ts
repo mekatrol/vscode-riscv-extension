@@ -9,7 +9,7 @@ export class AssemblyFormatter {
 
   public formatDocument = (document: string, configuration: AssemblyFormatterConfiguration, eol: string): string => {
     this.configuration = configuration;
-    this.tokeniser = new AssemblyTokeniser(document, this.configuration.tabWidth);
+    this.tokeniser = new AssemblyTokeniser(document, this.configuration.tabs.tabWidth);
     this.document = '';
     this.eol = eol;
 
@@ -40,7 +40,30 @@ export class AssemblyFormatter {
             break;
 
           case AssemblyTokenType.Label:
-            line += this.processLabel(tokens);
+            // Need to scope as block contains tuple which cannot be directly in switch statement
+            {
+              const [labelLine, addEol] = this.processLabel(tokens);
+
+              // Add label line to line
+              line += labelLine;
+
+              // If add EOL flagged for label then add EOL and reset line
+              if (addEol) {
+                this.document += line.trimEnd();
+                line = '';
+
+                // Add end of line character to end
+                this.document += this.eol;
+              }
+            }
+            break;
+
+          case AssemblyTokenType.Value:
+            line += this.processValue(tokens);
+            break;
+
+          case AssemblyTokenType.Instruction:
+            line += this.processInstruction(tokens);
             break;
 
           default:
@@ -80,8 +103,8 @@ export class AssemblyFormatter {
   };
 
   private processSpace = (spaces: string): string => {
-    const tabWidth = this.configuration!.tabWidth;
-    const replaceTabs = this.configuration!.replaceTabsWithSpaces;
+    const tabWidth = this.configuration!.tabs.tabWidth;
+    const replaceTabs = this.configuration!.tabs.replaceTabsWithSpaces;
 
     let line = '';
 
@@ -99,9 +122,99 @@ export class AssemblyFormatter {
     return line;
   };
 
+  private processInstruction = (tokens: AssemblyToken[]): string => {
+    const startColumn = this.configuration?.instruction.column ?? 0;
+    const dataColumn = this.configuration?.instruction.dataColumn ?? 0;
+
+    let line = '';
+
+    // Pop next token
+    let token = tokens.shift();
+
+    if (!token) {
+      throw Error('At least one token must be provided to processInstruction');
+    }
+
+    if (token.type === AssemblyTokenType.Space) {
+      // Add spaces
+      line += this.getSpacesToColumn(startColumn, line.length, token.value);
+
+      // Pop next token
+      token = tokens.shift();
+    } else if (startColumn > 0) {
+      // There was no whitespace at beginning of line so insert 'startColumn' spaces
+      line += this.getSpacesToColumn(startColumn, line.length, '');
+    }
+
+    if (!token) {
+      throw Error('Instruction token missing');
+    }
+
+    if (token.type !== AssemblyTokenType.Instruction) {
+      throw Error(`Unexpected token type '${token.type}' when processing instruction`);
+    }
+
+    // Add instruction name
+    line += token.value;
+
+    // Pop next token
+    token = tokens.shift();
+
+    // No more tokens so return line so far
+    if (!token) {
+      return line;
+    }
+
+    // There must be a space after the instruction
+    if (token.type === AssemblyTokenType.Space) {
+      // Add spaces
+      line += this.getSpacesToColumn(dataColumn, line.length, token.value);
+
+      // Pop next token
+      token = tokens.shift();
+    }
+
+    if (!token) {
+      // No more tokens so return line so far
+      return line;
+    }
+
+    // Just append all remaining tokens
+    do {
+      if (token.type === AssemblyTokenType.Space) {
+        line += this.processSpace(token.value);
+      } else if (token.type === AssemblyTokenType.Comment) {
+        // TODO: maybe space comment at certain column?
+        line += token.value;
+      } else {
+        // Just append token value
+        line += token.value;
+      }
+
+      // Pop next token
+      token = tokens.shift();
+    } while (token);
+
+    // Return line
+    return line;
+  };
+
+  private processValue = (tokens: AssemblyToken[]): string => {
+    let line = '';
+
+    let token = tokens.shift();
+
+    while (token) {
+      line += token.value;
+      token = tokens.shift();
+    }
+
+    return line;
+  };
+
   private processDirective = (tokens: AssemblyToken[]): string => {
-    const startColumn = this.configuration?.directiveColumn ?? 0;
-    const dataColumn = this.configuration?.directiveDataColumn ?? 0;
+    const startColumn = this.configuration?.directive.column ?? 0;
+    const dataColumn = this.configuration?.directive.dataColumn ?? 0;
 
     let line = '';
 
@@ -162,7 +275,6 @@ export class AssemblyFormatter {
         line += this.processSpace(token.value);
       } else if (token.type === AssemblyTokenType.Comment) {
         // TODO: maybe space comment at certain column?
-        // Just append comment
         line += token.value;
       } else {
         // Just append token value
@@ -173,13 +285,14 @@ export class AssemblyFormatter {
       token = tokens.shift();
     } while (token);
 
-    // Return line with whitespace trimmed from end
+    // Return line
     return line;
   };
 
-  private processLabel = (tokens: AssemblyToken[]): string => {
-    const startColumn = this.configuration?.labelColumn ?? 0;
-    const dataColumn = this.configuration?.labelDataColumn ?? 0;
+  private processLabel = (tokens: AssemblyToken[]): [string, boolean] => {
+    const startColumn = this.configuration?.label.column ?? 0;
+    const dataColumn = this.configuration?.label.dataColumn ?? 0;
+    const ownLine = this.configuration?.label.hasOwnLine;
 
     let line = '';
 
@@ -238,8 +351,16 @@ export class AssemblyFormatter {
       line += token.value;
     }
 
-    // Don't process labels any further, another primary token type will be processed if any non whitespace tokens remaining
-    return line;
+    // If there is only whitespace left on end of label line then remove the whitespace
+    else if (tokens.length === 1 && tokens[0].type === AssemblyTokenType.Space) {
+      tokens.shift();
+    }
+
+    // If label configured to be on own line and there are more tokens then flag add EOL
+    const addEol = !!ownLine && tokens.length > 0;
+
+    // Return label line and add EOL flag
+    return [line, addEol];
   };
 
   private getSpacesToColumn = (desiredColumn: number | undefined, currentLineLength: number, spaces: string): string => {

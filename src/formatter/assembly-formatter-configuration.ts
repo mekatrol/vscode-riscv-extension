@@ -2,31 +2,52 @@ import * as vscode from 'vscode';
 import { posix } from 'path';
 import { configurationFileName, defaultConfiguration, defaultTabWidth } from './constants';
 
-export interface AssemblyFormatterConfiguration {
-  // The column that instructions will be indented to, -1 for disable indenting instructions
-  instructionIndentation: number;
+export interface Indentable {
+  // The column number to place primary token, undefined to leave as is
+  column: number | undefined;
 
-  // True if labels have their own line, else false if they can share line, undefined to disable label processing
-  labelsHaveOwnLine: boolean;
+  // The column number to place primary data, undefined to leave as is
+  dataColumn: number | undefined;
+}
 
+export interface DirectiveConfiguration extends Indentable {}
+
+export interface LabelConfiguration extends Indentable {
+  // True if a label has its own line, false if they can share line, undefined leave as is
+  hasOwnLine: boolean;
+}
+
+export interface InstructionConfiguration extends Indentable {
+  bits: number;
+  supportsMultiplication: boolean;
+}
+
+export interface TabConfiguration {
   // If replaceTabsWithSpaces is not undefined then replace any tabs with the specified number of spaces
   replaceTabsWithSpaces: number | undefined;
 
   // The number of spaced that a tab consumes. Used to determine column numbering.
   // ie a tabWidth of 1 will add 1 to the column number when a tab is found, whereas a tabWidth of 4 will add 4 to the column number when a tab is found.
   tabWidth: number;
+}
 
-  // The column number to place directives, undefined to leave as is
-  directiveColumn: number | undefined;
+export interface AssemblyFormatterConfiguration {
+  tabs: TabConfiguration;
 
-  // The column number to place directive data, undefined to leave as is
-  directiveDataColumn: number | undefined;
+  directive: DirectiveConfiguration;
 
-  // The column number to place labels, undefined to leave as is
-  labelColumn: number | undefined;
+  label: LabelConfiguration;
 
-  // The column number to place label data, undefined to leave as is
-  labelDataColumn: number | undefined;
+  instruction: InstructionConfiguration;
+}
+
+export interface MetaAssemblyFormatterConfiguration {
+  version: number;
+  description: string;
+}
+
+export interface AssemblyFormatterConfigurationWithMeta extends AssemblyFormatterConfiguration {
+  meta: MetaAssemblyFormatterConfiguration;
 }
 
 export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguration> => {
@@ -62,7 +83,15 @@ export enum CreateAssemblyFormatterConfigurationResult {
 }
 
 export const createDefaultConfiguration = async (): Promise<[CreateAssemblyFormatterConfigurationResult, string?]> => {
-  let configuration: AssemblyFormatterConfiguration = Object.assign({}, defaultConfiguration);
+  let configuration: AssemblyFormatterConfigurationWithMeta = Object.assign(
+    {
+      meta: {
+        version: 1,
+        description: 'See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values.'
+      }
+    },
+    defaultConfiguration
+  );
 
   if (!vscode.workspace.workspaceFolders) {
     // Return default if there is no workspace configuration file
@@ -82,9 +111,11 @@ export const createDefaultConfiguration = async (): Promise<[CreateAssemblyForma
       /* ignore */
     }
 
+    const content = JSON.stringify(configuration, null, defaultTabWidth);
+
     // Create the file
     // eslint-disable-next-line no-undef
-    const writeData = Buffer.from(JSON.stringify(configuration, null, defaultTabWidth), 'utf8');
+    const writeData = Buffer.from(content, 'utf8');
     await vscode.workspace.fs.writeFile(fileUri, writeData);
 
     return [CreateAssemblyFormatterConfigurationResult.Created, fileUri.path];
