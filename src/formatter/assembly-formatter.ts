@@ -1,5 +1,5 @@
 import { AssemblyToken, AssemblyTokenType, AssemblyTokeniser } from './assembly-tokeniser';
-import { AssemblyFormatterConfiguration } from './assembly-formatter-configuration';
+import { AssemblyFormatterConfiguration, IndentableConfiguration } from './assembly-formatter-configuration';
 
 export class AssemblyFormatter {
   private configuration?: AssemblyFormatterConfiguration;
@@ -122,9 +122,10 @@ export class AssemblyFormatter {
     return line;
   };
 
-  private processInstruction = (tokens: AssemblyToken[]): string => {
-    const startColumn = this.configuration?.instruction.column ?? 0;
-    const dataColumn = this.configuration?.instruction.dataColumn ?? 0;
+  private processIndentable = (tokens: AssemblyToken[], primaryTokenType: AssemblyTokenType, indenting: IndentableConfiguration): string => {
+    const startColumn = indenting.column ?? 0;
+    const dataColumn = indenting.dataColumn ?? 0;
+    const commentColumn = indenting.commentColumn ?? 0;
 
     let line = '';
 
@@ -132,7 +133,7 @@ export class AssemblyFormatter {
     let token = tokens.shift();
 
     if (!token) {
-      throw Error('At least one token must be provided to processInstruction');
+      throw Error(`At least one token must be provided when processing '${primaryTokenType}'`);
     }
 
     if (token.type === AssemblyTokenType.Space) {
@@ -147,14 +148,14 @@ export class AssemblyFormatter {
     }
 
     if (!token) {
-      throw Error('Instruction token missing');
+      throw Error(`'${primaryTokenType}' token missing`);
     }
 
-    if (token.type !== AssemblyTokenType.Instruction) {
-      throw Error(`Unexpected token type '${token.type}' when processing instruction`);
+    if (token.type !== primaryTokenType) {
+      throw Error(`Unexpected token type '${token.type}' when processing '${primaryTokenType}'`);
     }
 
-    // Add instruction name
+    // Add primary token value
     line += token.value;
 
     // Pop next token
@@ -165,7 +166,7 @@ export class AssemblyFormatter {
       return line;
     }
 
-    // There must be a space after the instruction
+    // There should be a space after the primary token
     if (token.type === AssemblyTokenType.Space) {
       // Add spaces
       line += this.getSpacesToColumn(dataColumn, line.length, token.value);
@@ -184,7 +185,14 @@ export class AssemblyFormatter {
       if (token.type === AssemblyTokenType.Space) {
         line += this.processSpace(token.value);
       } else if (token.type === AssemblyTokenType.Comment) {
-        // TODO: maybe space comment at certain column?
+        if (commentColumn) {
+          // Trim end of line in case space already added
+          line = line.trimEnd();
+
+          // Pad to column number
+          line += this.getSpacesToColumn(commentColumn, line.length, ' ');
+        }
+
         line += token.value;
       } else {
         // Just append token value
@@ -197,6 +205,14 @@ export class AssemblyFormatter {
 
     // Return line
     return line;
+  };
+
+  private processInstruction = (tokens: AssemblyToken[]): string => {
+    return this.processIndentable(tokens, AssemblyTokenType.Instruction, this.configuration!.instruction);
+  };
+
+  private processDirective = (tokens: AssemblyToken[]): string => {
+    return this.processIndentable(tokens, AssemblyTokenType.Directive, this.configuration!.directive);
   };
 
   private processValue = (tokens: AssemblyToken[]): string => {
@@ -209,83 +225,6 @@ export class AssemblyFormatter {
       token = tokens.shift();
     }
 
-    return line;
-  };
-
-  private processDirective = (tokens: AssemblyToken[]): string => {
-    const startColumn = this.configuration?.directive.column ?? 0;
-    const dataColumn = this.configuration?.directive.dataColumn ?? 0;
-
-    let line = '';
-
-    // Pop next token
-    let token = tokens.shift();
-
-    if (!token) {
-      throw Error('At least one token must be provided to processDirective');
-    }
-
-    if (token.type === AssemblyTokenType.Space) {
-      // Add spaces
-      line += this.getSpacesToColumn(startColumn, line.length, token.value);
-
-      // Pop next token
-      token = tokens.shift();
-    } else if (startColumn > 0) {
-      // There was no whitespace at beginning of line so insert 'startColumn' spaces
-      line += this.getSpacesToColumn(startColumn, line.length, '');
-    }
-
-    if (!token) {
-      throw Error('Directive token missing');
-    }
-
-    if (token.type !== AssemblyTokenType.Directive) {
-      throw Error(`Unexpected token type '${token.type}' when processing directive`);
-    }
-
-    // Add section directive value (eg .section, .bss, .data)
-    line += token.value;
-
-    // Pop next token
-    token = tokens.shift();
-
-    // No more tokens so return line so far
-    if (!token) {
-      return line;
-    }
-
-    // There must be a space after the directive
-    if (token.type === AssemblyTokenType.Space) {
-      // Add spaces
-      line += this.getSpacesToColumn(dataColumn, line.length, token.value);
-
-      // Pop next token
-      token = tokens.shift();
-    }
-
-    // No more tokens so return line so far
-    if (!token) {
-      return line;
-    }
-
-    // Just append all remaining tokens
-    do {
-      if (token.type === AssemblyTokenType.Space) {
-        line += this.processSpace(token.value);
-      } else if (token.type === AssemblyTokenType.Comment) {
-        // TODO: maybe space comment at certain column?
-        line += token.value;
-      } else {
-        // Just append token value
-        line += token.value;
-      }
-
-      // Pop next token
-      token = tokens.shift();
-    } while (token);
-
-    // Return line
     return line;
   };
 

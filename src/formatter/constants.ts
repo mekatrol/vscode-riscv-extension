@@ -12,19 +12,22 @@ export const defaultConfiguration: AssemblyFormatterConfiguration = {
   // Columns to place directive and data following directive
   directive: {
     column: 5,
-    dataColumn: 20
+    dataColumn: 20,
+    commentColumn: 40
   },
 
   label: {
     // Columns to place label and data following label
     column: 5,
     dataColumn: 20,
+    commentColumn: 40,
     hasOwnLine: true
   },
   instruction: {
     bits: 32,
     supportsMultiplication: false,
     column: 5,
-    dataColumn: 20
+    dataColumn: 20,
+    commentColumn: 40
   }
 };

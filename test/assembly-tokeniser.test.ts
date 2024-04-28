@@ -291,19 +291,20 @@ test('fileContent', () => {
   let expectedLineNumber = 1;
 
   while (tokeniser.hasMore()) {
-    if (expectedLineNumber > expectedLineTokens.length) {
+    if (expectedLineNumber <= expectedLineTokens.length) {
       // Only process as many lines as there are expected lines
-      break;
-    }
+      const expectedTokens = expectedLineTokens[expectedLineNumber - 1];
 
-    const expectedTokens = expectedLineTokens[expectedLineNumber - 1];
+      const lineTokens = tokeniser.nextLine();
+      expect(lineTokens).not.toEqual(undefined);
+      expect(lineTokens.length).toEqual(expectedTokens.length);
 
-    const lineTokens = tokeniser.nextLine();
-    expect(lineTokens).not.toEqual(undefined);
-    expect(lineTokens.length).toEqual(expectedTokens.length);
-
-    for (let i = 0; i < lineTokens.length; i++) {
-      expect(lineTokens[i]).toEqual(expectedTokens[i]);
+      for (let i = 0; i < lineTokens.length; i++) {
+        expect(lineTokens[i]).toEqual(expectedTokens[i]);
+      }
+    } else {
+      // Just pull next line of tokens and continue
+      tokeniser.nextLine();
     }
 
     expectedLineNumber++;

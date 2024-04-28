@@ -48,6 +48,11 @@ describe('label', () => {
     config.label.dataColumn = undefined;
     config.label.hasOwnLine = true;
 
+    // Because we check the remainder make sure it is formatted as expected
+    config.instruction.column = 5;
+    config.instruction.dataColumn = 20;
+    config.instruction.commentColumn = 40;
+
     const document = formatter.formatDocument('LABEL_1: li t1,0x34 # do stuff    ', config, EOL);
 
     const groups = /(?<firstLine>[^\n\r]+)($|\n|\r\n)+(?<remainder>.*)/.exec(document)?.groups;
@@ -55,6 +60,6 @@ describe('label', () => {
     const remainder = groups ? groups['remainder'] : '';
 
     expect(firstLine).toBe('LABEL_1:'); // Note: whitespace at end also trimmed
-    expect(remainder).toBe('    li             t1,0x34 # do stuff'); // Note: whitespace at end also trimmed
+    expect(remainder).toBe('    li             t1,0x34             # do stuff'); // Note: whitespace at end also trimmed
   });
 });

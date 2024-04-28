@@ -2,22 +2,25 @@ import * as vscode from 'vscode';
 import { posix } from 'path';
 import { configurationFileName, defaultConfiguration, defaultTabWidth } from './constants';
 
-export interface Indentable {
+export interface IndentableConfiguration {
   // The column number to place primary token, undefined to leave as is
   column: number | undefined;
 
   // The column number to place primary data, undefined to leave as is
   dataColumn: number | undefined;
+
+  // The column number to place comments
+  commentColumn: number | undefined;
 }
 
-export interface DirectiveConfiguration extends Indentable {}
+export interface DirectiveConfiguration extends IndentableConfiguration {}
 
-export interface LabelConfiguration extends Indentable {
+export interface LabelConfiguration extends IndentableConfiguration {
   // True if a label has its own line, false if they can share line, undefined leave as is
   hasOwnLine: boolean;
 }
 
-export interface InstructionConfiguration extends Indentable {
+export interface InstructionConfiguration extends IndentableConfiguration {
   bits: number;
   supportsMultiplication: boolean;
 }
