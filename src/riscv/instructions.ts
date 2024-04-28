@@ -61,6 +61,7 @@ export const rv32mInstructions = [
 ] as Instruction[];
 
 export const riscvPseudoInstructions = [
+  { instruction: 'call', expansion: '', description: '' },
   { instruction: 'nop', expansion: 'addi zero,zero,0', description: 'No operation' },
   { instruction: 'li', expansion: 'rd, expression', description: '	(several expansions)	Load immediate' },
   { instruction: 'la', expansion: 'rd, symbol', description: '(several expansions)	Load address' },

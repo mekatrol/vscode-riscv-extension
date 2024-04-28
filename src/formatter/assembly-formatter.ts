@@ -91,7 +91,13 @@ export class AssemblyFormatter {
       this.document += line;
     }
 
-    return this.configuration.endOfFileHasBlankLine ? this.document : this.document.trimEnd();
+    this.document = this.document.trimEnd();
+
+    if (this.configuration.endOfFileHasBlankLine) {
+      this.document += eol;
+    }
+
+    return this.document;
   };
 
   private getPrimaryToken = (tokens: AssemblyToken[]): AssemblyTokenType => {
@@ -147,8 +153,10 @@ export class AssemblyFormatter {
     }
 
     if (token.type === AssemblyTokenType.Space) {
-      // Add spaces
-      line += this.getSpacesToColumn(startColumn, line.length, token.value);
+      // Only add spaces if primary token does not start at column 1
+      if (startColumn !== 1) {
+        line += this.getSpacesToColumn(startColumn, line.length, token.value);
+      }
 
       // Pop next token
       token = tokens.shift();
