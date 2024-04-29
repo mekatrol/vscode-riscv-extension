@@ -68,10 +68,7 @@ export class AssemblyFormatter {
             break;
 
           case AssemblyTokenType.Comment:
-            while (tokens.length) {
-              const token = tokens.shift()!;
-              line += token.value;
-            }
+            line += this.processCommentOnlyLine(tokens);
             break;
 
           default:
@@ -117,6 +114,42 @@ export class AssemblyFormatter {
     }
 
     return nonSpace[0].type;
+  };
+
+  private processCommentOnlyLine = (tokens: AssemblyToken[]): string => {
+    const startColumn = this.configuration?.commentOnlyLineColumn;
+    let line = '';
+
+    // In reality a comment only line should only ever have 1 or 2 tokens:
+    // * 1 token if the comment starts at column 1
+    // * 2 tokens is there is a space token before the comment token
+
+    let token = tokens.shift();
+
+    if (!token) {
+      return line;
+    }
+
+    if (token.type === AssemblyTokenType.Space) {
+      // Only add spaces if primary token does not start at column 1
+      if (startColumn !== 1) {
+        line += this.getSpacesToColumn(startColumn, line.length, token.value);
+      }
+
+      token = tokens.shift();
+
+      if (!token) {
+        return line;
+      }
+    } else if (startColumn && startColumn > 1) {
+      // There was no whitespace at beginning of line so insert 'startColumn' spaces
+      line += this.getSpacesToColumn(startColumn, line.length, '');
+    }
+
+    // Add comment to line
+    line += token.value;
+
+    return line;
   };
 
   private processSpace = (spaces: string): string => {

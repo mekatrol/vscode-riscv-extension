@@ -61,6 +61,7 @@ You can use the formatter with default settings, however you can also change the
     "help": "See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values."
   },
   "endOfFileHasBlankLine": true,
+  "commentOnlyLineColumn": 1,
   "tabs": {
     "replaceTabsWithSpaces": 2,
     "tabWidth": 2
@@ -102,51 +103,54 @@ The configuration file contains the `meta` element. This element provides inform
 `endOfFileHasBlankLine` [**true | false**] True to add blank line at end of file, false for no blank line.  
 Default is **true**.
 
-`tabs.replaceTabsWithSpaces` [**>= 1 | undefined**]. For `undefined` tabs are not replaced with spaces. For [`>= 1`] tabs are replaced with the number of spaces specified.  
+`commentOnlyLineColumn` [**>= 1 | null**] The number column to place the comment of a ***comment only*** line. No processing alignment of comment tokens is performed if this setting is `null`.  
+Default is **1**.
+
+`tabs.replaceTabsWithSpaces` [**>= 1 | null**]. For `null` tabs are not replaced with spaces. For [`>= 1`] tabs are replaced with the number of spaces specified.  
 Default is **2**.
 
 `tabs.tabWidth` [**>= 1**] The number of spaces that a tab equates to. Used to determine column numbering when padding out columns (primary, data, comment). e.g. a tabWidth of 1 will add 1 to the column number when a tab is found, whereas a tabWidth of 4 will add 4 to the column number when a tab is found. This setting is redundant if `replaceTabsWithSpaces` = `true` (because tabs will be replaced with spaces!).  
 Default is **2**.
 
-`directive.primaryColumn` [**>= 1 | undefined**]. The column to place the directive (e.g. `.section`). A value of 5 will position the directive in the 5th column (ie 4 spaces then the directive). No processing alignment of directive primary tokens is performed if this column is `undefined`.  
+`directive.primaryColumn` [**>= 1 | null**]. The column to place the directive (e.g. `.section`). A value of 5 will position the directive in the 5th column (ie 4 spaces then the directive). No processing alignment of directive primary tokens is performed if this column is `null`.  
 Default is **5**.
 
-`directive.dataColumn` [**>= 1 | undefined**]. The column for any data following the directive. No processing alignment of data tokens is performed if this setting is `undefined`.  
+`directive.dataColumn` [**>= 1 | null**]. The column for any data following the directive. No processing alignment of data tokens is performed if this setting is `null`.  
 Default is **15**.
 
-`directive.commentColumn` [**>= 1 | undefined**]. The column for any comment following the directive. No processing alignment of non-primary comment tokens is performed if this setting is `undefined`.  
+`directive.commentColumn` [**>= 1 | null**]. The column for any comment following the directive. No processing alignment of non-primary comment tokens is performed if this setting is `null`.  
 Default is **40**.
 
-`label.primaryColumn` [**>= 1 | undefined**]. The column to place the label (e.g. `LABEL_1:`). A value of 3 will position the label in the 3rd column (ie 2 spaces then the label). No processing alignment of label primary tokens is performed if this setting is `undefined`.  
+`label.primaryColumn` [**>= 1 | null**]. The column to place the label (e.g. `LABEL_1:`). A value of 3 will position the label in the 3rd column (ie 2 spaces then the label). No processing alignment of label primary tokens is performed if this setting is `null`.  
 Default is **5**.
 
-`label.dataColumn` [**>= 1 | undefined**]. The column for any data following the label. No processing alignment of data tokens is performed if this setting is `undefined`.  
+`label.dataColumn` [**>= 1 | null**]. The column for any data following the label. No processing alignment of data tokens is performed if this setting is `null`.  
 Default is **15**.
 
-`label.commentColumn` [**>= 1 | undefined**]. The column for any comment following the label. No processing alignment of non-primary comment tokens is performed if this setting is `undefined`.  
+`label.commentColumn` [**>= 1 | null**]. The column for any comment following the label. No processing alignment of non-primary comment tokens is performed if this setting is `null`.  
 Default is **40**.
 
 `label.hasOwnLine` [**true | false**]. True to force label onto its own line, false to leave label as is (i.e. can have instructions on the same line).  
 e.g. `LABEL_1: li t0,0x01`.  
 Default is **true**.
 
-`instruction.primaryColumn` [**>= 1 | undefined**]. The column to place the primary instruction (e.g. `addi`). A value of 4 will position the instruction in the 4th column (ie 3 spaces then the instruction). No processing alignment of instruction primary tokens is performed if this setting is `undefined`.  
+`instruction.primaryColumn` [**>= 1 | null**]. The column to place the primary instruction (e.g. `addi`). A value of 4 will position the instruction in the 4th column (ie 3 spaces then the instruction). No processing alignment of instruction primary tokens is performed if this setting is `null`.  
 Default is **5**.
 
-`instruction.dataColumn` [**>= 1 | undefined**]. The column for any data following the instruction. No processing alignment of data tokens is performed if this setting is `undefined`.  
+`instruction.dataColumn` [**>= 1 | null**]. The column for any data following the instruction. No processing alignment of data tokens is performed if this setting is `null`.  
 Default is **15**.
 
-`instruction.commentColumn` [**>= 1 | undefined**]. The column for any data following the instruction. No processing alignment of non-primary comment tokens is performed if this setting is `undefined`.  
+`instruction.commentColumn` [**>= 1 | null**]. The column for any data following the instruction. No processing alignment of non-primary comment tokens is performed if this setting is `null`.  
 Default is **40**.
 
 `instruction.supportedInstructionSets` Array of supported instruction sets, one of `[R32I, R64I, RV32M, RV64M, RV32A, RV64A, RV32F, RV64F, RV32D,RV64D, Pseudo, Compressed]`.  
 Default is **[R32I, Pseudo]**.
 
-`value.primaryColumn` [**>= 1 | undefined**]. The column to place the value (e.g. `.section`). A value of 5 will position the value in the 5th column (ie 4 spaces then the value). No processing alignment of value primary tokens is performed if this column is `undefined`.  
+`value.primaryColumn` [**>= 1 | null**]. The column to place the value (e.g. `.section`). A value of 5 will position the value in the 5th column (ie 4 spaces then the value). No processing alignment of value primary tokens is performed if this column is `null`.  
 Default is **5**.
 
-`value.dataColumn` [**>= 1 | undefined**]. The column for any data following the value. No processing alignment of data tokens is performed if this setting is `undefined`.  
+`value.dataColumn` [**>= 1 | null**]. The column for any data following the value. No processing alignment of data tokens is performed if this setting is `null`.  
 Default is **15**.
 
-`value.commentColumn` [**>= 1 | undefined**]. The column for any comment following the value. No processing alignment of non-primary comment tokens is performed if this setting is `undefined`.  
+`value.commentColumn` [**>= 1 | null**]. The column for any comment following the value. No processing alignment of non-primary comment tokens is performed if this setting is `null`.  
 Default is **40**.
