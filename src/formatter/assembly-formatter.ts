@@ -139,7 +139,7 @@ export class AssemblyFormatter {
     return line;
   };
 
-  private processIndentable = (tokens: AssemblyToken[], primaryTokenType: AssemblyTokenType, indenting: IndentableConfiguration): string => {
+  private processIndentable = (tokens: AssemblyToken[], primaryTokenType: AssemblyTokenType, indenting: IndentableConfiguration, primaryOnOwnLine: boolean = false): string => {
     const startColumn = indenting.primaryColumn ?? 0;
     const dataColumn = indenting.dataColumn ?? 0;
     const commentColumn = indenting.commentColumn ?? 0;
@@ -176,6 +176,19 @@ export class AssemblyFormatter {
 
     // Add primary token value
     line += token.value;
+
+    // Special case for when primary token can be on on line (e.g. LABEL)
+    if (primaryOnOwnLine) {
+      // Even though primary can be on its own line, that is only needed when the remaining tokens
+      // are not just space and comments (ie spaces and comments can follow primary tokens on their own line)
+      // it is for when other primary tokens follow the label, eg an instruction following a label, e.g.:
+      // LABEL_1: li t0,0x40
+      const nextPrimaryTokenForLine = this.getPrimaryToken(tokens);
+
+      if (nextPrimaryTokenForLine !== undefined && nextPrimaryTokenForLine !== AssemblyTokenType.Space && nextPrimaryTokenForLine != AssemblyTokenType.Comment) {
+        return line;
+      }
+    }
 
     // Pop next token
     token = tokens.shift();
@@ -239,77 +252,8 @@ export class AssemblyFormatter {
   };
 
   private processLabel = (tokens: AssemblyToken[]): [string, boolean] => {
-    const startColumn = this.configuration?.label.primaryColumn ?? 0;
-    const dataColumn = this.configuration?.label.dataColumn ?? 0;
-    const ownLine = this.configuration?.label.hasOwnLine;
-
-    let line = '';
-
-    // Pop next token
-    let token = tokens.shift();
-
-    if (!token) {
-      throw Error('At least one token must be provided to processLabel');
-    }
-
-    if (token.type === AssemblyTokenType.Space) {
-      // Add spaces
-      line += this.getSpacesToColumn(startColumn, line.length, token.value);
-
-      // Pop next token
-      token = tokens.shift();
-    } else if (startColumn > 0) {
-      // There was no whitespace at beginning of line so insert 'startColumn' spaces
-      line += this.getSpacesToColumn(startColumn, line.length, '');
-    }
-
-    if (!token) {
-      throw Error('Label token missing');
-    }
-
-    if (token.type !== AssemblyTokenType.Label) {
-      throw Error(`Unexpected token type '${token.type}' when processing label`);
-    }
-
-    // Add label value (eg LABEL_1:)
-    line += token.value;
-
-    const nextPrimaryToken = this.getPrimaryToken(tokens);
-
-    if (nextPrimaryToken === AssemblyTokenType.Comment) {
-      // Pop next token (we know there is on because we got a primary token)
-      token = tokens.shift()!;
-
-      if (token.type === AssemblyTokenType.Space) {
-        // Add spaces
-        line += this.getSpacesToColumn(dataColumn, line.length, token.value);
-
-        // Pop next token (we know there is on because we got a primary token)
-        token = tokens.shift()!;
-      } else if (dataColumn > 0) {
-        // There was no whitespace at beginning of line so insert 'startColumn' spaces
-        line += this.getSpacesToColumn(dataColumn, line.length, '');
-      }
-
-      // This should be a comment token as it is the primary token after the label token
-      if (token.type != AssemblyTokenType.Comment) {
-        throw Error(`Unexpected token type '${token.type}' when processing label comment`);
-      }
-
-      // Add comment
-      line += token.value;
-    }
-
-    // If there is only whitespace left on end of label line then remove the whitespace
-    else if (tokens.length === 1 && tokens[0].type === AssemblyTokenType.Space) {
-      tokens.shift();
-    }
-
-    // If label configured to be on own line and there are more tokens then flag add EOL
-    const addEol = !!ownLine && tokens.length > 0;
-
-    // Return label line and add EOL flag
-    return [line, addEol];
+    const ownLine = !!this.configuration?.label.hasOwnLine;
+    return [this.processIndentable(tokens, AssemblyTokenType.Label, this.configuration!.label, ownLine), ownLine && tokens.length > 0];
   };
 
   private getSpacesToColumn = (desiredColumn: number | undefined, currentLineLength: number, spaces: string): string => {
@@ -328,8 +272,9 @@ export class AssemblyFormatter {
     let paddingLength = desiredColumn - 1 - currentLineLength;
 
     if (paddingLength <= 0) {
-      // We need a minimum of 1 space. This happens if currentColumn >= desiredColumn
-      paddingLength = 1;
+      // We need a minimum of 1 space unless desired column is 1 then we need a minimum of zero.
+      // This happens if currentColumn >= desiredColumn
+      paddingLength = desiredColumn === 1 ? 0 : 1;
     }
 
     // Return length number of spaces
