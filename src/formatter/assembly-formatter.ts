@@ -235,16 +235,7 @@ export class AssemblyFormatter {
   };
 
   private processValue = (tokens: AssemblyToken[]): string => {
-    let line = '';
-
-    let token = tokens.shift();
-
-    while (token) {
-      line += token.value;
-      token = tokens.shift();
-    }
-
-    return line;
+    return this.processIndentable(tokens, AssemblyTokenType.Value, this.configuration!.value);
   };
 
   private processLabel = (tokens: AssemblyToken[]): [string, boolean] => {

@@ -28,6 +28,10 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
     const newConfiguration = JSON.parse(json);
 
     configuration = Object.assign(configuration, newConfiguration);
+
+    // Replace non-sensible configuration values
+    configuration.tabs.replaceTabsWithSpaces = clampNumberUndefinable(configuration.tabs.replaceTabsWithSpaces, 2, undefined);
+    configuration.tabs.tabWidth = clampNumber(configuration.tabs.tabWidth, 2, undefined);
   } catch {
     /* ignore errors if config file does not exist */
   }
@@ -40,7 +44,7 @@ export const createDefaultConfiguration = async (): Promise<[CreateAssemblyForma
     {
       meta: {
         version: 1,
-        description: 'See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values.'
+        help: 'See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values.'
       }
     },
     defaultConfiguration
@@ -76,4 +80,28 @@ export const createDefaultConfiguration = async (): Promise<[CreateAssemblyForma
     /* ignore errors if config file does not exist */
     return [CreateAssemblyFormatterConfigurationResult.Error, e?.toString()];
   }
+};
+
+const clampNumberUndefinable = (value: number | undefined, min: number, max: number | undefined = undefined): number | undefined => {
+  if (!value) {
+    return undefined;
+  }
+
+  return clampNumber(value, min, max);
+};
+
+const clampNumber = (value: number, min: number, max: number | undefined = undefined): number => {
+  if (isNaN(value)) {
+    return min;
+  }
+
+  if (min && value < min) {
+    return min;
+  }
+
+  if (max && value > max) {
+    return max;
+  }
+
+  return value;
 };

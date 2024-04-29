@@ -22,11 +22,13 @@ export interface InstructionConfiguration extends IndentableConfiguration {
   supportedInstructionSets: InstructionSet[];
 }
 
+export interface ValueConfiguration extends IndentableConfiguration {}
+
 export interface TabConfiguration {
   // If replaceTabsWithSpaces is not undefined then replace any tabs with the specified number of spaces
   replaceTabsWithSpaces: number | undefined;
 
-  // The number of spaced that a tab consumes. Used to determine column numbering.
+  // The number of spaces that a tab consumes. Used to determine column numbering.
   // ie a tabWidth of 1 will add 1 to the column number when a tab is found, whereas a tabWidth of 4 will add 4 to the column number when a tab is found.
   tabWidth: number;
 }
@@ -41,11 +43,13 @@ export interface AssemblyFormatterConfiguration {
   label: LabelConfiguration;
 
   instruction: InstructionConfiguration;
+
+  value: ValueConfiguration;
 }
 
 export interface MetaAssemblyFormatterConfiguration {
   version: number;
-  description: string;
+  help: string;
 }
 
 export interface AssemblyFormatterConfigurationWithMeta extends AssemblyFormatterConfiguration {

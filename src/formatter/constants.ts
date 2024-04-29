@@ -8,28 +8,31 @@ export const defaultConfiguration: AssemblyFormatterConfiguration = {
   endOfFileHasBlankLine: true,
 
   tabs: {
-    replaceTabsWithSpaces: undefined,
+    replaceTabsWithSpaces: 2,
     tabWidth: 2
   },
 
-  // Columns to place directive and data following directive
   directive: {
-    primaryColumn: 3,
-    dataColumn: 10,
-    commentColumn: 20
+    primaryColumn: 5,
+    dataColumn: 15,
+    commentColumn: 40
   },
 
   label: {
-    // Columns to place label and data following label
-    primaryColumn: 1,
-    dataColumn: 10,
-    commentColumn: 20,
+    primaryColumn: 5,
+    dataColumn: 15,
+    commentColumn: 40,
     hasOwnLine: true
   },
   instruction: {
     supportedInstructionSets: [InstructionSet.R32I, InstructionSet.Pseudo],
-    primaryColumn: 3,
-    dataColumn: 10,
-    commentColumn: 20
+    primaryColumn: 5,
+    dataColumn: 15,
+    commentColumn: 40
+  },
+  value: {
+    primaryColumn: 5,
+    dataColumn: 15,
+    commentColumn: 40
   }
 };

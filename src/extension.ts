@@ -3,20 +3,30 @@ import { EOL } from 'node:os';
 import { AssemblyFormatter } from './formatter/assembly-formatter';
 import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration } from './utils/configuration';
 
+const runFormatter = async (document: vscode.TextDocument): Promise<vscode.TextEdit[]> => {
+  const content = new AssemblyFormatter().formatDocument(document.getText(), await loadConfiguration(), getEol());
+
+  // Get range of entire document
+  const firstLine = document.lineAt(0);
+  const lastLine = document.lineAt(document.lineCount - 1);
+  const textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
+
+  // Replace entire document
+  return [vscode.TextEdit.replace(textRange, content)];
+};
+
 // Called when extension is activated
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   // Register the formatter
   vscode.languages.registerDocumentFormattingEditProvider('assembly', {
     async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
-      const content = new AssemblyFormatter().formatDocument(document.getText(), await loadConfiguration(), getEol());
+      return await runFormatter(document);
+    }
+  });
 
-      // Get range of entire document
-      const firstLine = document.lineAt(0);
-      const lastLine = document.lineAt(document.lineCount - 1);
-      const textRange = new vscode.Range(firstLine.range.start, lastLine.range.end);
-
-      // Replace entire document
-      return [vscode.TextEdit.replace(textRange, content)];
+  vscode.languages.registerDocumentFormattingEditProvider('riscv', {
+    async provideDocumentFormattingEdits(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
+      return await runFormatter(document);
     }
   });
 
