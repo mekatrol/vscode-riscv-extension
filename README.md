@@ -62,6 +62,7 @@ You can use the formatter with default settings, however you can also change the
   },
   "endOfFileHasBlankLine": true,
   "commentOnlyLineColumn": 1,
+  "commentCharacter": "#",
   "tabs": {
     "replaceTabsWithSpaces": 2,
     "tabWidth": 2
@@ -105,6 +106,9 @@ Default is **true**.
 
 `commentOnlyLineColumn` [**>= 1 | null**] The number column to place the comment of a ***comment only*** line. No processing alignment of comment tokens is performed if this setting is `null`.  
 Default is **1**.
+
+`commentCharacter` [**# | ;**] The single character to use as the comment starting character. Must be one of '***#***' or '***;***'.  
+Default is **#**.
 
 `tabs.replaceTabsWithSpaces` [**>= 1 | null**]. For `null` tabs are not replaced with spaces. For [`>= 1`] tabs are replaced with the number of spaces specified.  
 Default is **2**.

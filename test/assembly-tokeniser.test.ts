@@ -4,14 +4,14 @@ import { testFileContent } from './test-file-content';
 import { InstructionSet, getCombinedInstructions } from '../src/riscv/instructions';
 
 test('Empty content returns undefined token', () => {
-  const tokeniser = new AssemblyTokeniser('', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+  const tokeniser = new AssemblyTokeniser('', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
   const token = tokeniser.nextToken();
 
   expect(token).toBe(undefined);
 });
 
 test('Whitespace content returns whitespace token followed by undefined token', () => {
-  const tokeniser = new AssemblyTokeniser('    ', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+  const tokeniser = new AssemblyTokeniser('    ', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Space);
@@ -24,7 +24,7 @@ test('Whitespace content returns whitespace token followed by undefined token', 
 });
 
 test('Whitespace content returns whitespace token followed by new line', () => {
-  const tokeniser = new AssemblyTokeniser('    \n', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+  const tokeniser = new AssemblyTokeniser('    \n', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Space);
@@ -45,7 +45,7 @@ test('Whitespace content returns whitespace token followed by new line', () => {
 
 describe('newline', () => {
   test('\n', () => {
-    const tokeniser = new AssemblyTokeniser('\n', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('\n', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Newline);
@@ -58,7 +58,7 @@ describe('newline', () => {
   });
 
   test('\r', () => {
-    const tokeniser = new AssemblyTokeniser('\r', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('\r', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Newline);
@@ -71,7 +71,7 @@ describe('newline', () => {
   });
 
   test('\r\n', () => {
-    const tokeniser = new AssemblyTokeniser('\r\n', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('\r\n', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Newline);
@@ -85,7 +85,7 @@ describe('newline', () => {
 });
 
 test('li', () => {
-  const tokeniser = new AssemblyTokeniser('li', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+  const tokeniser = new AssemblyTokeniser('li', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Instruction);
@@ -98,7 +98,7 @@ test('li', () => {
 });
 
 test('li\ta0,R32_GPIOD_CFGLR # This is the comment', () => {
-  const tokeniser = new AssemblyTokeniser('li\ta0,R32_GPIOD_CFGLR # This is the comment', 1, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+  const tokeniser = new AssemblyTokeniser('li\ta0,R32_GPIOD_CFGLR # This is the comment', 1, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
   let token = tokeniser.nextToken();
   expect(token).not.toEqual(undefined);
   expect(token?.type).toBe(AssemblyTokenType.Instruction);
@@ -140,7 +140,7 @@ test('li\ta0,R32_GPIOD_CFGLR # This is the comment', () => {
 
 describe('labels', () => {
   test('li:', () => {
-    const tokeniser = new AssemblyTokeniser('li:', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('li:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -153,7 +153,7 @@ describe('labels', () => {
   });
 
   test('li_:', () => {
-    const tokeniser = new AssemblyTokeniser('li_:', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('li_:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -166,7 +166,7 @@ describe('labels', () => {
   });
 
   test('li3:', () => {
-    const tokeniser = new AssemblyTokeniser('li3:', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('li3:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -179,7 +179,7 @@ describe('labels', () => {
   });
 
   test('li_2:', () => {
-    const tokeniser = new AssemblyTokeniser('li_2:', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('li_2:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -192,7 +192,7 @@ describe('labels', () => {
   });
 
   test('_li:', () => {
-    const tokeniser = new AssemblyTokeniser('_li:', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('_li:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).toBe(AssemblyTokenType.Label);
@@ -205,7 +205,7 @@ describe('labels', () => {
   });
 
   test('1_li:', () => {
-    const tokeniser = new AssemblyTokeniser('1_li:', 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    const tokeniser = new AssemblyTokeniser('1_li:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
     let token = tokeniser.nextToken();
     expect(token).not.toEqual(undefined);
     expect(token?.type).not.toBe(AssemblyTokenType.Label);
@@ -213,7 +213,7 @@ describe('labels', () => {
 });
 
 test('fileContent', () => {
-  const tokeniser = new AssemblyTokeniser(testFileContent, 2, getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+  const tokeniser = new AssemblyTokeniser(testFileContent, 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
 
   const expectedLineTokens: AssemblyToken[][] = [
     [],

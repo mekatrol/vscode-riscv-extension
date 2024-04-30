@@ -29,9 +29,41 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
 
     configuration = Object.assign(configuration, newConfiguration);
 
-    // Replace non-sensible configuration values
+    // The configuration comes from user entered value on disk, given this transpiles to
+    // JavaScript then the user can override values to invalid values without error.
+    // So we validate settings...
+
+    if (configuration.endOfFileHasBlankLine !== false && configuration.endOfFileHasBlankLine !== true) {
+      configuration.endOfFileHasBlankLine = true;
+    }
+
+    configuration.commentOnlyLineColumn = clampNumberUndefinable(configuration.commentOnlyLineColumn, 1, undefined);
+
+    if (configuration.commentCharacter !== '#' && configuration.commentCharacter != ';') {
+      configuration.commentCharacter = '#';
+    }
+
     configuration.tabs.replaceTabsWithSpaces = clampNumberUndefinable(configuration.tabs.replaceTabsWithSpaces, 2, undefined);
     configuration.tabs.tabWidth = clampNumber(configuration.tabs.tabWidth, 2, undefined);
+
+    configuration.directive.primaryColumn = clampNumberUndefinable(configuration.directive.primaryColumn, 2, undefined);
+    configuration.directive.dataColumn = clampNumberUndefinable(configuration.directive.dataColumn, 10, undefined);
+    configuration.directive.commentColumn = clampNumberUndefinable(configuration.directive.commentColumn, 20, undefined);
+
+    configuration.label.primaryColumn = clampNumberUndefinable(configuration.label.primaryColumn, 2, undefined);
+    configuration.label.dataColumn = clampNumberUndefinable(configuration.label.dataColumn, 10, undefined);
+    configuration.label.commentColumn = clampNumberUndefinable(configuration.label.commentColumn, 20, undefined);
+    if (configuration.label.hasOwnLine !== false && configuration.label.hasOwnLine !== true) {
+      configuration.label.hasOwnLine = true;
+    }
+
+    configuration.instruction.primaryColumn = clampNumberUndefinable(configuration.instruction.primaryColumn, 2, undefined);
+    configuration.instruction.dataColumn = clampNumberUndefinable(configuration.instruction.dataColumn, 10, undefined);
+    configuration.instruction.commentColumn = clampNumberUndefinable(configuration.instruction.commentColumn, 20, undefined);
+
+    configuration.value.primaryColumn = clampNumberUndefinable(configuration.value.primaryColumn, 2, undefined);
+    configuration.value.dataColumn = clampNumberUndefinable(configuration.value.dataColumn, 10, undefined);
+    configuration.value.commentColumn = clampNumberUndefinable(configuration.value.commentColumn, 20, undefined);
   } catch {
     /* ignore errors if config file does not exist */
   }

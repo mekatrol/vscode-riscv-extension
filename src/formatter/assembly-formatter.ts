@@ -10,7 +10,12 @@ export class AssemblyFormatter {
 
   public formatDocument = (document: string, configuration: AssemblyFormatterConfiguration, eol: string): string => {
     this.configuration = configuration;
-    this.tokeniser = new AssemblyTokeniser(document, this.configuration.tabs.tabWidth, getCombinedInstructions(configuration.instruction.supportedInstructionSets));
+    this.tokeniser = new AssemblyTokeniser(
+      document,
+      this.configuration.tabs.tabWidth,
+      configuration.commentCharacter ?? '#',
+      getCombinedInstructions(configuration.instruction.supportedInstructionSets)
+    );
     this.document = '';
     this.eol = eol;
 
@@ -73,7 +78,8 @@ export class AssemblyFormatter {
 
           default:
             while (tokens.length) {
-              tokens.shift();
+              const token = tokens.shift()!;
+              line += token.value;
             }
             break;
         }

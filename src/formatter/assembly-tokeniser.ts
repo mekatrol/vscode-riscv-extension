@@ -1,3 +1,4 @@
+import { joinRegexAsOr } from '../utils/regex';
 import { defaultTabWidth } from './constants';
 
 export enum AssemblyTokenType {
@@ -16,33 +17,18 @@ export enum AssemblyTokenType {
 // NOTES:
 //    1. the group names must match the values in the enum AssemblyTokenType
 //    2. the groups names are processed in order of definition (top to bottom)
-const reTokens = [
-  /(?<Comment>^#.*)/,
-  /(?<Directive>^\.[A-Za-z_][A-Za-z0-9_]*)/,
-  /(?<Label>^[A-Za-z_][A-Za-z0-9_]*:)/,
-  /(?<Newline>^\r\n|^\n|^\r)/,
-  /(?<Space>^[ \t]+)/,
-  /(?<String>".*?")/,
-  /(?<Value>^[^# \t\r\n:]+)/,
+const reCommentHash = /(?<Comment>^#.*)/;
+const reCommentSemicolon = /(?<Comment>^;.*)/;
+const reDirective = /(?<Directive>^\.[A-Za-z_][A-Za-z0-9_]*)/;
+const reLabel = /(?<Label>^[A-Za-z_][A-Za-z0-9_]*:)/;
+const reNewLine = /(?<Newline>^\r\n|^\n|^\r)/;
+const reSpace = /(?<Space>^[ \t]+)/;
+const reString = /(?<String>".*?")/;
+const reValueNotHashComment = /(?<Value>^[^# \t\r\n:]+)/;
+const reValueNotSemicolonComment = /(?<Value>^[^; \t\r\n:]+)/;
 
-  // This must be last match as it matches anything
-  /(?<Unknown>(^.+)($|\n|\r))/
-];
-
-// Create distinct set of flags
-const reTokenFlags = reTokens
-  .map((t) => t.flags)
-  .join('') // Join all as single string
-  .split('') // Split into individual characters
-  .sort() // Sort alphabetically
-  .join('') // Rejoin characters
-  .replace(/(.)(?=.*\1)/g, ''); // Make letters distinct (remove repeated characters)
-
-// Join all source values with or '|' operator
-const reTokenSource = reTokens.map((t) => t.source).join('|');
-
-// Construct the joined expression
-const reToken = new RegExp(reTokenSource, reTokenFlags);
+// This must be last match as it matches anything
+const reUnknown = /(?<Unknown>(^.+)($|\n|\r))/;
 
 export interface AssemblyToken {
   lineNumber: number;
@@ -58,14 +44,27 @@ export class AssemblyTokeniser {
   private contentOffset: number;
   private tabWidth: number;
   private instructions: string[];
+  private commentCharacter: string;
+  private reTokens: RegExp;
 
-  constructor(content: string, tabWidth: number, instructions: string[]) {
+  constructor(content: string, tabWidth: number, commentCharacter: string, instructions: string[]) {
     this.content = content;
     this.lineNumber = 1;
     this.columnNumber = 1;
     this.contentOffset = 0;
     this.tabWidth = isNaN(tabWidth) || tabWidth < 1 ? defaultTabWidth : tabWidth; // Make sure a valid value
     this.instructions = instructions;
+    this.commentCharacter = commentCharacter;
+
+    let re: RegExp[] = [];
+
+    if (this.commentCharacter === ';') {
+      re = [reDirective, reLabel, reNewLine, reCommentSemicolon, reSpace, reString, reValueNotSemicolonComment, reUnknown];
+    } else {
+      re = [reDirective, reLabel, reNewLine, reCommentHash, reSpace, reString, reValueNotHashComment, reUnknown];
+    }
+
+    this.reTokens = joinRegexAsOr(re);
   }
 
   public hasMore = (): boolean => {
@@ -107,7 +106,7 @@ export class AssemblyTokeniser {
     const remainingContent = this.content.substring(this.contentOffset);
 
     // Regex next token
-    const groups = reToken.exec(remainingContent)?.groups;
+    const groups = this.reTokens.exec(remainingContent)?.groups;
 
     // If there are no groups then return the rest of the content
     // as an unknown token

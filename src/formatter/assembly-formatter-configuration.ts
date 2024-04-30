@@ -36,6 +36,7 @@ export interface TabConfiguration {
 export interface AssemblyFormatterConfiguration {
   endOfFileHasBlankLine: boolean;
   commentOnlyLineColumn: number | undefined;
+  commentCharacter: string | undefined;
 
   tabs: TabConfiguration;
 

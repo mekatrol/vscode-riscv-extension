@@ -31,6 +31,22 @@ describe('comment only lines', () => {
     expect(comment).toBe('# Comment');
   });
 
+  test('start column 1 semi colon comment', () => {
+    const formatter = new AssemblyFormatter();
+
+    const config = Object.assign({}, defaultConfiguration);
+    config.commentOnlyLineColumn = 1;
+    config.commentCharacter = ';';
+
+    const document = formatter.formatDocument('    ; Comment\t\t', config, EOL);
+
+    expect(document).toBe(`; Comment${EOL}`); // Note: whitespace at end also trimmed
+
+    // at col 1
+    const comment = document.substring(config.commentOnlyLineColumn - 1, config.commentOnlyLineColumn - 1 + '; Comment'.length);
+    expect(comment).toBe('; Comment');
+  });
+
   test('start column 10', () => {
     const formatter = new AssemblyFormatter();
 
@@ -45,5 +61,21 @@ describe('comment only lines', () => {
     // at col 10
     const comment = document.substring(config.commentOnlyLineColumn - 1, config.commentOnlyLineColumn - 1 + '# Comment'.length);
     expect(comment).toBe('# Comment');
+  });
+
+  test('# comments include ; in file', () => {
+    const formatter = new AssemblyFormatter();
+
+    const config = Object.assign({}, defaultConfiguration);
+    config.commentOnlyLineColumn = 1;
+    config.commentCharacter = '#';
+
+    config.value.primaryColumn = undefined;
+    config.value.dataColumn = undefined;
+    config.value.commentColumn = undefined;
+
+    const document = formatter.formatDocument('    ; Comment\t\t', config, EOL);
+
+    expect(document).toBe(`    ; Comment${EOL}`); // Note: whitespace at end also trimmed
   });
 });
