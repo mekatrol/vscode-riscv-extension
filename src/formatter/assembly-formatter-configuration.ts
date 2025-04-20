@@ -44,6 +44,8 @@ export interface AssemblyFormatterConfiguration {
 
   label: LabelConfiguration;
 
+  localLabel: LabelConfiguration;
+
   instruction: InstructionConfiguration;
 
   value: ValueConfiguration;

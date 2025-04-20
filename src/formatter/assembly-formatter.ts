@@ -64,7 +64,26 @@ export class AssemblyFormatter {
             }
             break;
 
-          case AssemblyTokenType.Value:
+            case AssemblyTokenType.LocalLabel:
+              // Need to scope as block contains tuple which cannot be directly in switch statement
+              {
+                const [labelLine, addEol] = this.processLocalLabel(tokens);
+  
+                // Add label line to line
+                line += labelLine;
+  
+                // If add EOL flagged for label then add EOL and reset line
+                if (addEol) {
+                  this.document += line.trimEnd();
+                  line = '';
+  
+                  // Add end of line character to end
+                  this.document += this.eol;
+                }
+              }
+              break;
+
+              case AssemblyTokenType.Value:
             line += this.processValue(tokens);
             break;
 
@@ -293,6 +312,11 @@ export class AssemblyFormatter {
   private processLabel = (tokens: AssemblyToken[]): [string, boolean] => {
     const ownLine = !!this.configuration?.label.hasOwnLine;
     return [this.processIndentable(tokens, AssemblyTokenType.Label, this.configuration!.label, ownLine), ownLine && tokens.length > 0];
+  };
+
+  private processLocalLabel = (tokens: AssemblyToken[]): [string, boolean] => {
+    const ownLine = !!this.configuration?.label.hasOwnLine;
+    return [this.processIndentable(tokens, AssemblyTokenType.LocalLabel, this.configuration!.localLabel, ownLine), ownLine && tokens.length > 0];
   };
 
   private getSpacesToColumn = (desiredColumn: number | undefined, currentLineLength: number, spaces: string): string => {

@@ -6,6 +6,7 @@ export enum AssemblyTokenType {
   Directive = 'Directive',
   Instruction = 'Instruction',
   Label = 'Label',
+  LocalLabel = 'LocalLabel',
   Newline = 'Newline',
   Space = 'Space',
   String = 'String',
@@ -19,8 +20,9 @@ export enum AssemblyTokenType {
 //    2. the groups names are processed in order of definition (top to bottom)
 const reCommentHash = /(?<Comment>^#.*)/;
 const reCommentSemicolon = /(?<Comment>^;.*)/;
-const reDirective = /(?<Directive>^\.[A-Za-z_][A-Za-z0-9_]*)/;
-const reLabel = /(?<Label>^[A-Za-z_][A-Za-z0-9_]*:)/;
+const reDirective = /^(?<Directive>\.[A-Za-z_][A-Za-z0-9_]*)(?!.*:\s*)/
+const reLocalLabel = /(?<LocalLabel>^[0-9]+:)/;
+const reLabel = /(?<Label>^[$A-Za-z_][$A-Za-z0-9_]*:)/;
 const reNewLine = /(?<Newline>^\r\n|^\n|^\r)/;
 const reSpace = /(?<Space>^[ \t]+)/;
 const reString = /(?<String>".*?")/;
@@ -59,9 +61,9 @@ export class AssemblyTokeniser {
     let re: RegExp[] = [];
 
     if (this.commentCharacter === ';') {
-      re = [reDirective, reLabel, reNewLine, reCommentSemicolon, reSpace, reString, reValueNotSemicolonComment, reUnknown];
+      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentSemicolon, reSpace, reString, reValueNotSemicolonComment, reUnknown];
     } else {
-      re = [reDirective, reLabel, reNewLine, reCommentHash, reSpace, reString, reValueNotHashComment, reUnknown];
+      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentHash, reSpace, reString, reValueNotHashComment, reUnknown];
     }
 
     this.reTokens = joinRegexAsOr(re);

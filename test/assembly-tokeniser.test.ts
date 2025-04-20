@@ -212,6 +212,40 @@ describe('labels', () => {
   });
 });
 
+describe('localLabels', () => {
+  test('1:', () => {
+    const tokeniser = new AssemblyTokeniser('1:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    let token = tokeniser.nextToken();
+    expect(token).not.toEqual(undefined);
+    expect(token?.type).toBe(AssemblyTokenType.LocalLabel);
+    expect(token!.lineNumber).toBe(1);
+    expect(token!.columnNumber).toBe(1);
+    expect(token!.value).toBe('1:');
+
+    token = tokeniser.nextToken();
+    expect(token).toBe(undefined);
+  });
+
+  test('999:', () => {
+    const tokeniser = new AssemblyTokeniser('999:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    let token = tokeniser.nextToken();
+    expect(token).not.toEqual(undefined);
+    expect(token?.type).toBe(AssemblyTokenType.LocalLabel);
+    expect(token!.lineNumber).toBe(1);
+    expect(token!.columnNumber).toBe(1);
+    expect(token!.value).toBe('999:');
+
+    token = tokeniser.nextToken();
+    expect(token).toBe(undefined);
+  });  
+
+  test('999a:', () => {
+    const tokeniser = new AssemblyTokeniser('999a:', 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
+    let token = tokeniser.nextToken();
+    expect(token?.type).not.toBe(AssemblyTokenType.LocalLabel);
+  });  
+});
+
 test('fileContent', () => {
   const tokeniser = new AssemblyTokeniser(testFileContent, 2, '#', getCombinedInstructions([InstructionSet.R32I, InstructionSet.Pseudo]));
 
