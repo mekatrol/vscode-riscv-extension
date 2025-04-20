@@ -57,6 +57,22 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
       configuration.label.hasOwnLine = true;
     }
 
+    if (!configuration.localLabel) {
+      configuration.localLabel = {
+        primaryColumn: 2,
+        dataColumn: 10,
+        commentColumn: 20,
+        hasOwnLine: false
+      };
+    }
+
+    configuration.localLabel.primaryColumn = clampNumberUndefinable(configuration.localLabel.primaryColumn, 2, undefined);
+    configuration.localLabel.dataColumn = clampNumberUndefinable(configuration.localLabel.dataColumn, 10, undefined);
+    configuration.localLabel.commentColumn = clampNumberUndefinable(configuration.localLabel.commentColumn, 20, undefined);
+    if (configuration.localLabel.hasOwnLine !== false && configuration.localLabel.hasOwnLine !== true) {
+      configuration.localLabel.hasOwnLine = true;
+    }
+
     configuration.instruction.primaryColumn = clampNumberUndefinable(configuration.instruction.primaryColumn, 2, undefined);
     configuration.instruction.dataColumn = clampNumberUndefinable(configuration.instruction.dataColumn, 10, undefined);
     configuration.instruction.commentColumn = clampNumberUndefinable(configuration.instruction.commentColumn, 20, undefined);

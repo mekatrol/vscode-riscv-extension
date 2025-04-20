@@ -26,6 +26,14 @@ export const defaultConfiguration: AssemblyFormatterConfiguration = {
     commentColumn: 40,
     hasOwnLine: true
   },
+  
+  localLabel: {
+    primaryColumn: 5,
+    dataColumn: 15,
+    commentColumn: 40,
+    hasOwnLine: true
+  },
+
   instruction: {
     supportedInstructionSets: [InstructionSet.R32I, InstructionSet.Pseudo],
     primaryColumn: 5,

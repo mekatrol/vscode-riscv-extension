@@ -14,6 +14,7 @@ The formatter works by tokenising the content of a file, line by line. Any non b
 
 - ***Directive*** - one of the assembly directives such as `.section`, `.bss` and `.data`.
 - ***Label*** - a code label, e.g. `LABEL_1:`.
+- ***Local Label*** - a numeric local code label, e.g. `1:`.
 - ***Instruction*** - a risc-v op code instruction, e.g. `la`, `call`, `addi`.
 
 A ***Comment*** is a conditional primary token in that it is only a primary token when it is the only non whitespace token on a line, e.g.  
@@ -73,6 +74,12 @@ You can use the formatter with default settings, however you can also change the
     "commentColumn": 40
   },
   "label": {
+    "primaryColumn": 5,
+    "dataColumn": 15,
+    "commentColumn": 40,
+    "hasOwnLine": true
+  },
+  "localLabel": {
     "primaryColumn": 5,
     "dataColumn": 15,
     "commentColumn": 40,
