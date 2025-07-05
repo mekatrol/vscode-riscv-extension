@@ -18,9 +18,10 @@ export enum AssemblyTokenType {
 // NOTES:
 //    1. the group names must match the values in the enum AssemblyTokenType
 //    2. the groups names are processed in order of definition (top to bottom)
+const reCommentAt = /(?<Comment>^@.*)/;
 const reCommentHash = /(?<Comment>^#.*)/;
 const reCommentSemicolon = /(?<Comment>^;.*)/;
-const reDirective = /^(?<Directive>\.[A-Za-z_][A-Za-z0-9_]*)(?!.*:\s*)/
+const reDirective = /^(?<Directive>\.[A-Za-z_][A-Za-z0-9_]*)(?!.*:\s*)/;
 const reLocalLabel = /(?<LocalLabel>^[0-9]+:)/;
 const reLabel = /(?<Label>^[$A-Za-z_][$A-Za-z0-9_]*:)/;
 const reNewLine = /(?<Newline>^\r\n|^\n|^\r)/;
@@ -62,6 +63,8 @@ export class AssemblyTokeniser {
 
     if (this.commentCharacter === ';') {
       re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentSemicolon, reSpace, reString, reValueNotSemicolonComment, reUnknown];
+    } else if (this.commentCharacter === '@') {
+      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentAt, reSpace, reString, reValueNotHashComment, reUnknown];
     } else {
       re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentHash, reSpace, reString, reValueNotHashComment, reUnknown];
     }

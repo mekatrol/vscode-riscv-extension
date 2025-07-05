@@ -39,7 +39,7 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
 
     configuration.commentOnlyLineColumn = clampNumberUndefinable(configuration.commentOnlyLineColumn, 1, undefined);
 
-    if (configuration.commentCharacter !== '#' && configuration.commentCharacter != ';') {
+    if (configuration.commentCharacter !== '#' && configuration.commentCharacter != ';' && configuration.commentCharacter != '@') {
       configuration.commentCharacter = '#';
     }
 
