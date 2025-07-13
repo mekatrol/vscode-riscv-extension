@@ -20,7 +20,7 @@ export enum AssemblyTokenType {
 //    1. the group names must match the values in the enum AssemblyTokenType
 //    2. the groups names are processed in order of definition (top to bottom)
 const reCommentC = /^(?<CComment>\/\/.*)/;
-const reCommentCBlock = /^(?<CCommentBlock>\s*\/\*[\s\S]*?\*\/)/gm;
+const reCommentCBlock = /^(?<CCommentBlock>\s*\/\*[\s\S]*?\*\/)/m;
 const reCommentAt = /^(?<Comment>@.*)/;
 const reCommentHash = /^(?<Comment>#.*)/;
 const reCommentSemicolon = /^(?<Comment>;.*)/;
@@ -30,6 +30,7 @@ const reLabel = /^(?<Label>[$A-Za-z_][$A-Za-z0-9_]*:)/;
 const reNewLine = /^(?<Newline>\r\n|\n|\r)/;
 const reSpace = /^(?<Space>[ \t]+)/;
 const reString = /^(?<String>".*?")/;
+const reValueNotAtComment = /^(?<Value>[^@ \t\r\n:]+)/;
 const reValueNotHashComment = /^(?<Value>[^# \t\r\n:]+)/;
 const reValueNotSemicolonComment = /^(?<Value>[^; \t\r\n:]+)/;
 
@@ -62,16 +63,19 @@ export class AssemblyTokeniser {
     this.instructions = instructions;
     this.commentCharacter = commentCharacter;
 
-    let re: RegExp[] = [];
+    let commentRe = reCommentSemicolon;
+    let commentNotRe = reValueNotSemicolonComment;
+
+    if (this.commentCharacter === '@') {
+      commentRe = reCommentAt;
+      commentNotRe = reValueNotAtComment;
+    } else if (this.commentCharacter === '#') {
+      commentRe = reCommentHash;
+      commentNotRe = reValueNotHashComment;
+    }
 
     // IMPORTANT: The order of each regex in the array matters
-    if (this.commentCharacter === ';') {
-      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentSemicolon, reCommentCBlock, reCommentC, reSpace, reString, reValueNotSemicolonComment, reUnknown];
-    } else if (this.commentCharacter === '@') {
-      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentAt, reCommentCBlock, reCommentC, reSpace, reString, reValueNotHashComment, reUnknown];
-    } else {
-      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentHash, reCommentCBlock, reCommentC, reSpace, reString, reValueNotHashComment, reUnknown];
-    }
+    const re: RegExp[] = [reDirective, reLabel, reLocalLabel, reNewLine, commentRe, reCommentCBlock, reCommentC, reSpace, reString, commentNotRe, reUnknown];
 
     this.reTokens = re.map((s) => RegExp(s));
   }
@@ -105,10 +109,14 @@ export class AssemblyTokeniser {
     return lineTokens;
   };
 
+  /**
+   * Returns the first match whose index is exactly 0.
+   * Ignores any match that occurs later in the string.
+   */
   public getMatchingGroups = (content: string): Record<string, string> => {
     for (const re of this.reTokens) {
       const match = re.exec(content);
-      if (match?.groups) {
+      if (match?.groups && match.index === 0) {
         return match.groups;
       }
     }

@@ -72,13 +72,13 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
     }
 
     configuration.tabs.replaceTabsWithSpaces = clampNumberUndefinable(configuration.tabs.replaceTabsWithSpaces, 2, undefined);
-    configuration.tabs.tabWidth = clampNumber(configuration.tabs.tabWidth, 2, undefined);
+    configuration.tabs.tabWidth = clampNumber(configuration.tabs.tabWidth, 1, undefined);
 
-    configuration.directive.primaryColumn = clampNumberUndefinable(configuration.directive.primaryColumn, 2, undefined);
+    configuration.directive.primaryColumn = clampNumberUndefinable(configuration.directive.primaryColumn, 1, undefined);
     configuration.directive.dataColumn = clampNumberUndefinable(configuration.directive.dataColumn, 10, undefined);
     configuration.directive.commentColumn = clampNumberUndefinable(configuration.directive.commentColumn, 20, undefined);
 
-    configuration.label.primaryColumn = clampNumberUndefinable(configuration.label.primaryColumn, 2, undefined);
+    configuration.label.primaryColumn = clampNumberUndefinable(configuration.label.primaryColumn, 1, undefined);
     configuration.label.dataColumn = clampNumberUndefinable(configuration.label.dataColumn, 10, undefined);
     configuration.label.commentColumn = clampNumberUndefinable(configuration.label.commentColumn, 20, undefined);
     if (configuration.label.hasOwnLine !== false && configuration.label.hasOwnLine !== true) {
@@ -94,18 +94,18 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
       };
     }
 
-    configuration.localLabel.primaryColumn = clampNumberUndefinable(configuration.localLabel.primaryColumn, 2, undefined);
+    configuration.localLabel.primaryColumn = clampNumberUndefinable(configuration.localLabel.primaryColumn, 1, undefined);
     configuration.localLabel.dataColumn = clampNumberUndefinable(configuration.localLabel.dataColumn, 10, undefined);
     configuration.localLabel.commentColumn = clampNumberUndefinable(configuration.localLabel.commentColumn, 20, undefined);
     if (configuration.localLabel.hasOwnLine !== false && configuration.localLabel.hasOwnLine !== true) {
       configuration.localLabel.hasOwnLine = true;
     }
 
-    configuration.instruction.primaryColumn = clampNumberUndefinable(configuration.instruction.primaryColumn, 2, undefined);
+    configuration.instruction.primaryColumn = clampNumberUndefinable(configuration.instruction.primaryColumn, 1, undefined);
     configuration.instruction.dataColumn = clampNumberUndefinable(configuration.instruction.dataColumn, 10, undefined);
     configuration.instruction.commentColumn = clampNumberUndefinable(configuration.instruction.commentColumn, 20, undefined);
 
-    configuration.value.primaryColumn = clampNumberUndefinable(configuration.value.primaryColumn, 2, undefined);
+    configuration.value.primaryColumn = clampNumberUndefinable(configuration.value.primaryColumn, 1, undefined);
     configuration.value.dataColumn = clampNumberUndefinable(configuration.value.dataColumn, 10, undefined);
     configuration.value.commentColumn = clampNumberUndefinable(configuration.value.commentColumn, 20, undefined);
   } catch {
