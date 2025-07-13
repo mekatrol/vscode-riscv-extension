@@ -10,6 +10,25 @@ export enum CreateAssemblyFormatterConfigurationResult {
   NoWorkspace = 'NoWorkspace'
 }
 
+export const configurationExists = async (): Promise<boolean> => {
+  if (!vscode.workspace.workspaceFolders) {
+    // Return false if there is no workspace configuration file
+    return false;
+  }
+
+  try {
+    const folderUri = vscode.workspace.workspaceFolders[0].uri;
+    const fileUri = folderUri.with({ path: posix.join(folderUri.path, configurationFileName) });
+
+    // Will throw exception if the file does not exist
+    await vscode.workspace.fs.stat(fileUri);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguration> => {
   let configuration: AssemblyFormatterConfiguration = Object.assign({}, defaultConfiguration);
 
@@ -41,6 +60,15 @@ export const loadConfiguration = async (): Promise<AssemblyFormatterConfiguratio
 
     if (configuration.commentCharacter !== '#' && configuration.commentCharacter != ';' && configuration.commentCharacter != '@') {
       configuration.commentCharacter = '#';
+    }
+
+    if (configuration.disabled === undefined) {
+      configuration.disabled = false;
+    }
+
+    // Disable if issue with value
+    if (configuration.disabled !== true && configuration.disabled !== false) {
+      configuration.disabled = true;
     }
 
     configuration.tabs.replaceTabsWithSpaces = clampNumberUndefinable(configuration.tabs.replaceTabsWithSpaces, 2, undefined);
@@ -91,7 +119,7 @@ export const createDefaultConfiguration = async (): Promise<[CreateAssemblyForma
   let configuration: AssemblyFormatterConfigurationWithMeta = Object.assign(
     {
       meta: {
-        version: 1,
+        version: 2,
         help: 'See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values.'
       }
     },

@@ -64,26 +64,26 @@ export class AssemblyFormatter {
             }
             break;
 
-            case AssemblyTokenType.LocalLabel:
-              // Need to scope as block contains tuple which cannot be directly in switch statement
-              {
-                const [labelLine, addEol] = this.processLocalLabel(tokens);
-  
-                // Add label line to line
-                line += labelLine;
-  
-                // If add EOL flagged for label then add EOL and reset line
-                if (addEol) {
-                  this.document += line.trimEnd();
-                  line = '';
-  
-                  // Add end of line character to end
-                  this.document += this.eol;
-                }
-              }
-              break;
+          case AssemblyTokenType.LocalLabel:
+            // Need to scope as block contains tuple which cannot be directly in switch statement
+            {
+              const [labelLine, addEol] = this.processLocalLabel(tokens);
 
-              case AssemblyTokenType.Value:
+              // Add label line to line
+              line += labelLine;
+
+              // If add EOL flagged for label then add EOL and reset line
+              if (addEol) {
+                this.document += line.trimEnd();
+                line = '';
+
+                // Add end of line character to end
+                this.document += this.eol;
+              }
+            }
+            break;
+
+          case AssemblyTokenType.Value:
             line += this.processValue(tokens);
             break;
 
@@ -93,6 +93,10 @@ export class AssemblyFormatter {
 
           case AssemblyTokenType.Comment:
             line += this.processCommentOnlyLine(tokens);
+            break;
+
+          case AssemblyTokenType.CCommentBlock:
+            line += this.processCCommentBlock(tokens);
             break;
 
           default:
@@ -294,6 +298,22 @@ export class AssemblyFormatter {
     } while (token);
 
     // Return line
+    return line;
+  };
+
+  private processCCommentBlock = (tokens: AssemblyToken[]): string => {
+    // Get next token in array
+    const token = tokens.shift();
+
+    // This should not happen, but just in case handle as empty token value (empty string)
+    if (!token) {
+      return '';
+    }
+
+    // Replace any EOL characters with the EOL from config
+    const line = token.value.replace(/\r\n|\n|\r/g, this.eol);
+
+    // Return the token value
     return line;
   };
 

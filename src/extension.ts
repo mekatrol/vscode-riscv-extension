@@ -1,10 +1,24 @@
 import * as vscode from 'vscode';
 import { EOL } from 'node:os';
 import { AssemblyFormatter } from './formatter/assembly-formatter';
-import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration } from './utils/configuration';
+import { CreateAssemblyFormatterConfigurationResult, createDefaultConfiguration, loadConfiguration, configurationExists } from './utils/configuration';
 
 const runFormatter = async (document: vscode.TextDocument): Promise<vscode.TextEdit[]> => {
-  const content = new AssemblyFormatter().formatDocument(document.getText(), await loadConfiguration(), getEol());
+  // If the configuration does not exist then do nothing
+  if (!(await configurationExists())) {
+    // No edits
+    return [];
+  }
+
+  const configuration = await loadConfiguration();
+
+  // If the config is disabled then do nothing
+  if (configuration.disabled) {
+    // No edits
+    return [];
+  }
+
+  const content = new AssemblyFormatter().formatDocument(document.getText(), configuration, getEol());
 
   // Get range of entire document
   const firstLine = document.lineAt(0);

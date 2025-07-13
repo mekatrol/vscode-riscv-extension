@@ -58,12 +58,13 @@ You can use the formatter with default settings, however you can also change the
 ```json
 {
   "meta": {
-    "version": 1,
+    "version": 2,
     "help": "See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values."
   },
   "endOfFileHasBlankLine": true,
   "commentOnlyLineColumn": 1,
   "commentCharacter": "#",
+  "disabled": false,
   "tabs": {
     "replaceTabsWithSpaces": 2,
     "tabWidth": 2
@@ -116,6 +117,9 @@ Default is **1**.
 
 `commentCharacter` [**# | ;**] The single character to use as the comment starting character. Must be one of '***#***' or '***;***'.  
 Default is **#**.
+
+`disabled` [`false` | `true`] Setting the value to boolean `true` (not the string 'true') disables formatting. An invalid value will also disable formatting.
+Default is `false`.
 
 `tabs.replaceTabsWithSpaces` [**>= 1 | null**]. For `null` tabs are not replaced with spaces. For [`>= 1`] tabs are replaced with the number of spaces specified.  
 Default is **2**.

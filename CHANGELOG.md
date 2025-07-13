@@ -2,8 +2,9 @@
 
 All notable changes to the "mekatrol-risc-v-formatter" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## [1.0.2]
 
-## [Unreleased]
-
-- Initial release
+- Only apply formatting if the .criscv file is present (so that the formatter is disabled unless file exists)
+- Add disabled option in configuration file (to allow disabling format while keeping configuration file)
+- Handle `/* */` C style comment blocks
+- Handle `//` C style comments

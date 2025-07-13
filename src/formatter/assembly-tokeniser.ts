@@ -1,7 +1,8 @@
-import { joinRegexAsOr } from '../utils/regex';
 import { defaultTabWidth } from './constants';
 
 export enum AssemblyTokenType {
+  CComment = 'CComment',
+  CCommentBlock = 'CCommentBlock',
   Comment = 'Comment',
   Directive = 'Directive',
   Instruction = 'Instruction',
@@ -18,17 +19,19 @@ export enum AssemblyTokenType {
 // NOTES:
 //    1. the group names must match the values in the enum AssemblyTokenType
 //    2. the groups names are processed in order of definition (top to bottom)
-const reCommentAt = /(?<Comment>^@.*)/;
-const reCommentHash = /(?<Comment>^#.*)/;
-const reCommentSemicolon = /(?<Comment>^;.*)/;
+const reCommentC = /^(?<CComment>\/\/.*)/;
+const reCommentCBlock = /^(?<CCommentBlock>\s*\/\*[\s\S]*?\*\/)/gm;
+const reCommentAt = /^(?<Comment>@.*)/;
+const reCommentHash = /^(?<Comment>#.*)/;
+const reCommentSemicolon = /^(?<Comment>;.*)/;
 const reDirective = /^(?<Directive>\.[A-Za-z_][A-Za-z0-9_]*)(?!.*:\s*)/;
-const reLocalLabel = /(?<LocalLabel>^[0-9]+:)/;
-const reLabel = /(?<Label>^[$A-Za-z_][$A-Za-z0-9_]*:)/;
-const reNewLine = /(?<Newline>^\r\n|^\n|^\r)/;
-const reSpace = /(?<Space>^[ \t]+)/;
-const reString = /(?<String>".*?")/;
-const reValueNotHashComment = /(?<Value>^[^# \t\r\n:]+)/;
-const reValueNotSemicolonComment = /(?<Value>^[^; \t\r\n:]+)/;
+const reLocalLabel = /^(?<LocalLabel>[0-9]+:)/;
+const reLabel = /^(?<Label>[$A-Za-z_][$A-Za-z0-9_]*:)/;
+const reNewLine = /^(?<Newline>\r\n|\n|\r)/;
+const reSpace = /^(?<Space>[ \t]+)/;
+const reString = /^(?<String>".*?")/;
+const reValueNotHashComment = /^(?<Value>[^# \t\r\n:]+)/;
+const reValueNotSemicolonComment = /^(?<Value>[^; \t\r\n:]+)/;
 
 // This must be last match as it matches anything
 const reUnknown = /(?<Unknown>(^.+)($|\n|\r))/;
@@ -48,7 +51,7 @@ export class AssemblyTokeniser {
   private tabWidth: number;
   private instructions: string[];
   private commentCharacter: string;
-  private reTokens: RegExp;
+  private reTokens: RegExp[];
 
   constructor(content: string, tabWidth: number, commentCharacter: string, instructions: string[]) {
     this.content = content;
@@ -61,15 +64,16 @@ export class AssemblyTokeniser {
 
     let re: RegExp[] = [];
 
+    // IMPORTANT: The order of each regex in the array matters
     if (this.commentCharacter === ';') {
-      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentSemicolon, reSpace, reString, reValueNotSemicolonComment, reUnknown];
+      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentSemicolon, reCommentCBlock, reCommentC, reSpace, reString, reValueNotSemicolonComment, reUnknown];
     } else if (this.commentCharacter === '@') {
-      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentAt, reSpace, reString, reValueNotHashComment, reUnknown];
+      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentAt, reCommentCBlock, reCommentC, reSpace, reString, reValueNotHashComment, reUnknown];
     } else {
-      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentHash, reSpace, reString, reValueNotHashComment, reUnknown];
+      re = [reDirective, reLabel, reLocalLabel, reNewLine, reCommentHash, reCommentCBlock, reCommentC, reSpace, reString, reValueNotHashComment, reUnknown];
     }
 
-    this.reTokens = joinRegexAsOr(re);
+    this.reTokens = re.map((s) => RegExp(s));
   }
 
   public hasMore = (): boolean => {
@@ -101,6 +105,17 @@ export class AssemblyTokeniser {
     return lineTokens;
   };
 
+  public getMatchingGroups = (content: string): Record<string, string> => {
+    for (const re of this.reTokens) {
+      const match = re.exec(content);
+      if (match?.groups) {
+        return match.groups;
+      }
+    }
+
+    return {};
+  };
+
   public nextToken = (): AssemblyToken | undefined => {
     // If all content tokenised then return undefined
     if (!this.hasMore()) {
@@ -110,8 +125,8 @@ export class AssemblyTokeniser {
     // Get content remaining
     const remainingContent = this.content.substring(this.contentOffset);
 
-    // Regex next token
-    const groups = this.reTokens.exec(remainingContent)?.groups;
+    // Get matching groups
+    const groups = this.getMatchingGroups(remainingContent);
 
     // If there are no groups then return the rest of the content
     // as an unknown token
@@ -127,9 +142,16 @@ export class AssemblyTokeniser {
       if (value != undefined) {
         let tokenType = AssemblyTokenType[key as keyof typeof AssemblyTokenType];
 
-        // If is a value then check to see if is an instruction
-        if (tokenType === AssemblyTokenType.Value) {
-          tokenType = this.checkIsInstruction(value, tokenType);
+        switch (tokenType) {
+          // If C comment type then switch to just a normal comment
+          case AssemblyTokenType.CComment:
+            tokenType = AssemblyTokenType.Comment;
+            break;
+
+          // If is a value then check to see if is an instruction
+          case AssemblyTokenType.Value:
+            tokenType = this.checkIsInstruction(value, tokenType);
+            break;
         }
 
         // It is assumed that only one group in regex will match, therefore first found group is correct one to return
@@ -159,13 +181,25 @@ export class AssemblyTokeniser {
       type: type
     } as AssemblyToken;
 
-    if (token.type === AssemblyTokenType.Newline) {
-      // Advance line
-      this.lineNumber++;
-      this.columnNumber = 1;
-    } else {
-      // Advance column
-      this.columnNumber += type === AssemblyTokenType.Space ? this.calculateSpaceLength(tokenValue) : tokenValue.length;
+    switch (token.type) {
+      case AssemblyTokenType.CCommentBlock:
+        {
+          // We need to splt the content by newline then advance based on number of lines and remaining columns
+          const lines = tokenValue.split(/\r\n?|\n/);
+          this.lineNumber += lines.length - 1;
+          this.columnNumber = lines[lines.length - 1].length;
+        }
+        break;
+
+      case AssemblyTokenType.Newline:
+        // Advance line
+        this.lineNumber++;
+        this.columnNumber = 1;
+        break;
+
+      default:
+        // Advance column
+        this.columnNumber += type === AssemblyTokenType.Space ? this.calculateSpaceLength(tokenValue) : tokenValue.length;
     }
 
     // Advance content offset

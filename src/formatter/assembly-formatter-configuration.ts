@@ -37,6 +37,7 @@ export interface AssemblyFormatterConfiguration {
   endOfFileHasBlankLine: boolean;
   commentOnlyLineColumn: number | undefined;
   commentCharacter: string | undefined;
+  disabled: boolean | undefined;
 
   tabs: TabConfiguration;
 

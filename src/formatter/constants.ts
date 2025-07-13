@@ -8,6 +8,7 @@ export const defaultConfiguration: AssemblyFormatterConfiguration = {
   endOfFileHasBlankLine: true,
   commentOnlyLineColumn: 1,
   commentCharacter: '#',
+  disabled: false, // Default to enabled
 
   tabs: {
     replaceTabsWithSpaces: 2,
@@ -26,7 +27,7 @@ export const defaultConfiguration: AssemblyFormatterConfiguration = {
     commentColumn: 40,
     hasOwnLine: true
   },
-  
+
   localLabel: {
     primaryColumn: 5,
     dataColumn: 15,
