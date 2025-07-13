@@ -58,11 +58,12 @@ You can use the formatter with default settings, however you can also change the
 ```json
 {
   "meta": {
-    "version": 2,
+    "version": 3,
     "help": "See: https://github.com/mekatrol/vscode-riscv-extension for description of configuration values."
   },
   "endOfFileHasBlankLine": true,
   "commentOnlyLineColumn": 1,
+  "commentOnlyLineMatchNextColumn": false,
   "commentCharacter": "#",
   "disabled": false,
   "tabs": {
@@ -115,10 +116,13 @@ Default is **true**.
 `commentOnlyLineColumn` [**>= 1 | null**] The number column to place the comment of a ***comment only*** line. No processing alignment of comment tokens is performed if this setting is `null`.  
 Default is **1**.
 
+`commentOnlyLineMatchNextColumn` [**true | false**] Setting the value to `true` will ignore 'commentOnlyLineColumn' if the next line is not empty. The column number will match the starting column number of the next line. Allows comments to be aligned with the line following.
+Default is `false`.
+
 `commentCharacter` [**# | ;**] The single character to use as the comment starting character. Must be one of '***#***' or '***;***'.  
 Default is **#**.
 
-`disabled` [`false` | `true`] Setting the value to boolean `true` (not the string 'true') disables formatting. An invalid value will also disable formatting.
+`disabled` [**true | false**] Setting the value to `true` disables formatting. An invalid value will also disable formatting.
 Default is `false`.
 
 `tabs.replaceTabsWithSpaces` [**>= 1 | null**]. For `null` tabs are not replaced with spaces. For [`>= 1`] tabs are replaced with the number of spaces specified.  

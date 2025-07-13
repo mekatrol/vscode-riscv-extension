@@ -19,97 +19,35 @@ export class AssemblyFormatter {
     this.document = '';
     this.eol = eol;
 
+    // Keep track of previous tokens
+    let queuedTokenSets: AssemblyToken[][] = [];
+
     while (this.tokeniser.hasMore()) {
       const tokens = this.tokeniser.nextLine();
-      let primaryType = this.getPrimaryToken(tokens);
+      let primaryTokenType = this.getPrimaryTokenType(tokens);
 
-      let line = '';
+      if (this.configuration.commentOnlyLineMatchNextColumn && primaryTokenType === AssemblyTokenType.Comment) {
+        queuedTokenSets.push([...tokens]);
+        continue;
+      }
 
-      do {
-        switch (primaryType) {
-          case AssemblyTokenType.Newline:
-            // Add any line data and reset line
-            this.document += line.trimEnd();
-            line = '';
+      if (queuedTokenSets.length) {
+        // Play all queued token sets passing the next primary token type
+        for (const queuedTokens of queuedTokenSets) {
+          let line = this.processTokens(queuedTokens, primaryTokenType);
 
-            // Add end of line character to end
-            this.document += this.eol;
-            break;
+          // Trim whitespace from end and add EOL
+          line = line.trimEnd() + eol;
 
-          case AssemblyTokenType.Space:
-            // Do nothing for empty whitespace other than pop token
-            tokens.shift();
-            break;
-
-          case AssemblyTokenType.Directive:
-            line += this.processDirective(tokens);
-            break;
-
-          case AssemblyTokenType.Label:
-            // Need to scope as block contains tuple which cannot be directly in switch statement
-            {
-              const [labelLine, addEol] = this.processLabel(tokens);
-
-              // Add label line to line
-              line += labelLine;
-
-              // If add EOL flagged for label then add EOL and reset line
-              if (addEol) {
-                this.document += line.trimEnd();
-                line = '';
-
-                // Add end of line character to end
-                this.document += this.eol;
-              }
-            }
-            break;
-
-          case AssemblyTokenType.LocalLabel:
-            // Need to scope as block contains tuple which cannot be directly in switch statement
-            {
-              const [labelLine, addEol] = this.processLocalLabel(tokens);
-
-              // Add label line to line
-              line += labelLine;
-
-              // If add EOL flagged for label then add EOL and reset line
-              if (addEol) {
-                this.document += line.trimEnd();
-                line = '';
-
-                // Add end of line character to end
-                this.document += this.eol;
-              }
-            }
-            break;
-
-          case AssemblyTokenType.Value:
-            line += this.processValue(tokens);
-            break;
-
-          case AssemblyTokenType.Instruction:
-            line += this.processInstruction(tokens);
-            break;
-
-          case AssemblyTokenType.Comment:
-            line += this.processCommentOnlyLine(tokens);
-            break;
-
-          case AssemblyTokenType.CCommentBlock:
-            line += this.processCCommentBlock(tokens);
-            break;
-
-          default:
-            while (tokens.length) {
-              const token = tokens.shift()!;
-              line += token.value;
-            }
-            break;
+          // Add line and trim any whitespace at end of line
+          this.document += line;
         }
 
-        // Update primary token
-        primaryType = this.getPrimaryToken(tokens);
-      } while (tokens.length);
+        // Clear queued token sets
+        queuedTokenSets = [];
+      }
+
+      let line = this.processTokens(tokens, undefined);
 
       // Trim whitespace from end and add EOL
       line = line.trimEnd() + eol;
@@ -127,7 +65,100 @@ export class AssemblyFormatter {
     return this.document;
   };
 
-  private getPrimaryToken = (tokens: AssemblyToken[]): AssemblyTokenType => {
+  private processTokens = (tokens: AssemblyToken[], nextPrimaryToken: AssemblyTokenType | undefined): string => {
+    let line = '';
+    let primaryType = this.getPrimaryTokenType(tokens);
+
+    do {
+      switch (primaryType) {
+        case AssemblyTokenType.Newline:
+          // Add any line data and reset line
+          this.document += line.trimEnd();
+          line = '';
+
+          // Add end of line character to end
+          this.document += this.eol;
+          break;
+
+        case AssemblyTokenType.Space:
+          // Do nothing for empty whitespace other than pop token
+          tokens.shift();
+          break;
+
+        case AssemblyTokenType.Directive:
+          line += this.processDirective(tokens);
+          break;
+
+        case AssemblyTokenType.Label:
+          // Need to scope as block contains tuple which cannot be directly in switch statement
+          {
+            const [labelLine, addEol] = this.processLabel(tokens);
+
+            // Add label line to line
+            line += labelLine;
+
+            // If add EOL flagged for label then add EOL and reset line
+            if (addEol) {
+              this.document += line.trimEnd();
+              line = '';
+
+              // Add end of line character to end
+              this.document += this.eol;
+            }
+          }
+          break;
+
+        case AssemblyTokenType.LocalLabel:
+          // Need to scope as block contains tuple which cannot be directly in switch statement
+          {
+            const [labelLine, addEol] = this.processLocalLabel(tokens);
+
+            // Add label line to line
+            line += labelLine;
+
+            // If add EOL flagged for label then add EOL and reset line
+            if (addEol) {
+              this.document += line.trimEnd();
+              line = '';
+
+              // Add end of line character to end
+              this.document += this.eol;
+            }
+          }
+          break;
+
+        case AssemblyTokenType.Value:
+          line += this.processValue(tokens);
+          break;
+
+        case AssemblyTokenType.Instruction:
+          line += this.processInstruction(tokens);
+          break;
+
+        case AssemblyTokenType.Comment:
+          line += this.processCommentOnlyLine(tokens, nextPrimaryToken);
+          break;
+
+        case AssemblyTokenType.CCommentBlock:
+          line += this.processCCommentBlock(tokens);
+          break;
+
+        default:
+          while (tokens.length) {
+            const token = tokens.shift()!;
+            line += token.value;
+          }
+          break;
+      }
+
+      // Update primary token
+      primaryType = this.getPrimaryTokenType(tokens);
+    } while (tokens.length);
+
+    return line;
+  };
+
+  private getPrimaryTokenType = (tokens: AssemblyToken[]): AssemblyTokenType => {
     if (tokens.length === 0) {
       // If there are no tokens then return unknown
       return AssemblyTokenType.Unknown;
@@ -145,9 +176,14 @@ export class AssemblyFormatter {
     return nonSpace[0].type;
   };
 
-  private processCommentOnlyLine = (tokens: AssemblyToken[]): string => {
-    const startColumn = this.configuration?.commentOnlyLineColumn;
+  private processCommentOnlyLine = (tokens: AssemblyToken[], followingPrimaryTokenType: AssemblyTokenType | undefined): string => {
     let line = '';
+    let startColumn = this.configuration!.commentOnlyLineColumn!;
+
+    // If there is a folloing primary token token type then try to use its column
+    if (followingPrimaryTokenType && this.configuration?.commentOnlyLineMatchNextColumn) {
+      startColumn = this.getCommentStartColumn(followingPrimaryTokenType, startColumn);
+    }
 
     // In reality a comment only line should only ever have 1 or 2 tokens:
     // * 1 token if the comment starts at column 1
@@ -179,6 +215,28 @@ export class AssemblyFormatter {
     line += token.value;
 
     return line;
+  };
+
+  private getCommentStartColumn = (tokenType: AssemblyTokenType, defaultStartColumn: number): number => {
+    switch (tokenType) {
+      case AssemblyTokenType.Directive:
+        return this.configuration?.directive.primaryColumn ?? defaultStartColumn;
+
+      case AssemblyTokenType.Instruction:
+        return this.configuration?.instruction.primaryColumn ?? defaultStartColumn;
+
+      case AssemblyTokenType.Label:
+        return this.configuration?.label.primaryColumn ?? defaultStartColumn;
+
+      case AssemblyTokenType.LocalLabel:
+        return this.configuration?.localLabel.primaryColumn ?? defaultStartColumn;
+
+      case AssemblyTokenType.Value:
+        return this.configuration?.value.primaryColumn ?? defaultStartColumn;
+
+      default:
+        return defaultStartColumn;
+    }
   };
 
   private processSpace = (spaces: string): string => {
@@ -245,7 +303,7 @@ export class AssemblyFormatter {
       // are not just space and comments (ie spaces and comments can follow primary tokens on their own line)
       // it is for when other primary tokens follow the label, eg an instruction following a label, e.g.:
       // LABEL_1: li t0,0x40
-      const nextPrimaryTokenForLine = this.getPrimaryToken(tokens);
+      const nextPrimaryTokenForLine = this.getPrimaryTokenType(tokens);
 
       if (nextPrimaryTokenForLine !== undefined && nextPrimaryTokenForLine !== AssemblyTokenType.Space && nextPrimaryTokenForLine != AssemblyTokenType.Comment) {
         return line;

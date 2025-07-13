@@ -7,6 +7,7 @@ export const defaultTabWidth = 2;
 export const defaultConfiguration: AssemblyFormatterConfiguration = {
   endOfFileHasBlankLine: true,
   commentOnlyLineColumn: 1,
+  commentOnlyLineMatchNextColumn: false,
   commentCharacter: '#',
   disabled: false, // Default to enabled
 
